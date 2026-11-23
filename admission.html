@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Admissions – Larbec International Academy</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <!-- EmailJS for applicant thank you emails -->
+    <script src="https://unpkg.com/@emailjs/browser@4.4.1/dist/index.min.js"></script>
+    <!-- Firebase SDKs  (must come BEFORE firebase.js) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Our shared config & helpers -->
+    <script src="firebase.js"></script>
+    <style>
+        .page-hero {
+            min-height: 55vh;
+            background: linear-gradient(135deg, rgba(10, 22, 40, .88) 0%, rgba(26, 51, 104, .82) 100%),
+                url('./larbec piccs/HERO2 (2).png') center/cover no-repeat;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            padding: 140px 48px 70px;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10, 22, 40, .25), transparent 50%, rgba(10, 22, 40, .25));
+            z-index: 1
+        }
+
+        .page-hero-inner {
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2
+        }
+
+        .page-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            color: var(--white);
+            margin-bottom: 14px
+        }
+
+        .page-hero p {
+            color: rgba(255, 255, 255, .65);
+            font-size: .97rem;
+            line-height: 1.85;
+            margin-bottom: 30px
+        }
+
+        /* Steps bar */
+        .steps-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 48px;
+            position: sticky;
+            top: 74px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .step-wrap {
+            display: flex;
+            align-items: center
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 9px
+        }
+
+        .step-circle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .78rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            transition: all .3s;
+            background: var(--border);
+            color: var(--text-muted)
+        }
+
+        .step-circle.done {
+            background: var(--success);
+            color: #fff
+        }
+
+        .step-circle.active {
+            background: var(--violet);
+            color: var(--deep)
+        }
+
+        .step-label {
+            font-size: .78rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap
+        }
+
+        .step-label.active {
+            color: var(--violet);
+            font-weight: 600
+        }
+
+        .step-connector {
+            width: 48px;
+            height: 2px;
+            background: var(--border);
+            margin: 0 6px;
+            transition: background .3s
+        }
+
+        .step-connector.done {
+            background: var(--success)
+        }
+
+        /* Form area */
+        .admission-wrap {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 56px 20px
+        }
+
+        .form-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 44px
+        }
+
+        .form-card h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.55rem;
+            color: var(--deep);
+            margin-bottom: 6px
+        }
+
+        .form-card .sub {
+            color: var(--text-muted);
+            font-size: .86rem;
+            margin-bottom: 28px
+        }
+
+        .form-step {
+            display: none
+        }
+
+        .form-step.active {
+            display: block
+        }
+
+        .form-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 28px;
+            padding-top: 22px;
+            border-top: 1px solid var(--border)
+        }
+
+        .btn-next {
+            background: var(--violet);
+            color: var(--deep);
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: .88rem;
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-family: 'DM Sans', sans-serif
+        }
+
+        .btn-next:hover {
+            background: var(--violet-light)
+        }
+
+        .btn-prev {
+            background: transparent;
+            color: var(--text-muted);
+            padding: 11px 22px;
+            border-radius: 8px;
+            font-size: .88rem;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all .2s;
+            font-family: 'DM Sans', sans-serif
+        }
+
+        .btn-prev:hover {
+            border-color: var(--violet);
+            color: var(--violet)
+        }
+
+        .form-progress {
+            height: 3px;
+            background: var(--violet);
+            transition: width .4s ease;
+            border-radius: 3px;
+            margin-bottom: 28px
+        }
+
+        /* File upload */
+        .file-upload-box {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: var(--off-white);
+            position: relative
+        }
+
+        .file-upload-box:hover {
+            border-color: var(--violet);
+            background: rgba(201, 168, 76, .03)
+        }
+
+        .file-upload-box input[type=file] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%
+        }
+
+        .file-upload-box i {
+            font-size: 1.7rem;
+            color: var(--violet);
+            margin-bottom: 8px;
+            display: block
+        }
+
+        .file-upload-box p {
+            font-size: .82rem;
+            color: var(--text-muted)
+        }
+
+        .file-upload-box strong {
+            color: var(--violet)
+        }
+
+        .file-upload-box.file-ok {
+            border-color: var(--success);
+            background: rgba(46, 125, 50, .04)
+        }
+
+        .file-upload-box.file-err {
+            border-color: var(--error);
+            background: rgba(198, 40, 40, .04)
+        }
+
+        .upload-prog-wrap {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+            display: none
+        }
+
+        .upload-prog-fill {
+            height: 100%;
+            width: 0;
+            background: var(--violet);
+            border-radius: 2px;
+            transition: width .2s
+        }
+
+        /* Success box */
+        .success-box {
+            background: linear-gradient(135deg, var(--deep), var(--navy));
+            border-radius: 22px;
+            padding: 60px 48px;
+            text-align: center;
+            color: var(--white)
+        }
+
+        .success-icon {
+            width: 82px;
+            height: 82px;
+            border-radius: 50%;
+            background: rgba(201, 168, 76, .14);
+            border: 2px solid var(--violet);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 22px;
+            font-size: 2rem;
+            color: var(--violet)
+        }
+
+        .success-box h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin-bottom: 12px
+        }
+
+        .success-box p {
+            color: rgba(255, 255, 255, .65);
+            line-height: 1.85;
+            margin-bottom: 18px;
+            font-size: .93rem
+        }
+
+        .code-display {
+            background: rgba(201, 168, 76, .1);
+            border: 1px solid rgba(201, 168, 76, .3);
+            border-radius: 12px;
+            padding: 18px 40px;
+            display: inline-block;
+            font-family: monospace;
+            font-size: 1.75rem;
+            color: var(--violet);
+            letter-spacing: 8px;
+            margin-bottom: 20px
+        }
+
+        /* Track section */
+        #track {
+            background: var(--off-white);
+            padding: 80px 48px
+        }
+
+        .track-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 44px;
+            max-width: 560px;
+            margin: 0 auto
+        }
+
+        .track-card h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--deep);
+            margin-bottom: 8px
+        }
+
+        .track-result {
+            background: var(--off-white);
+            border-radius: 12px;
+            padding: 22px;
+            border-left: 4px solid var(--violet);
+            margin-top: 22px;
+            display: none
+        }
+
+        .track-result.show {
+            display: block
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 13px;
+            border-radius: 20px;
+            font-size: .76rem;
+            font-weight: 600
+        }
+
+        .status-pending {
+            background: rgba(230, 81, 0, .1);
+            color: var(--warn)
+        }
+
+        .status-accepted {
+            background: rgba(46, 125, 50, .1);
+            color: var(--success)
+        }
+
+        .status-rejected {
+            background: rgba(198, 40, 40, .1);
+            color: var(--error)
+        }
+
+        .status-docs {
+            background: rgba(201, 168, 76, .1);
+            color: var(--violet)
+        }
+
+        /* ═══ RESPONSIVE DESIGN ═══ */
+        @media (max-width: 1024px) {
+            .page-hero {
+                padding: 100px 32px 50px;
+                min-height: 50vh;
+            }
+
+            .page-hero h1 {
+                font-size: 2.2rem;
+                margin-top: 10px;
+            }
+
+            .steps-bar {
+                padding: 16px 24px;
+            }
+
+            .form-card {
+                padding: 32px;
+            }
+
+            .admission-wrap {
+                padding: 40px 16px;
+            }
+
+            #track {
+                padding: 60px 32px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-hero {
+                min-height: 40vh;
+                padding: 80px 20px 40px;
+                background-attachment: scroll;
+            }
+
+            .page-hero h1 {
+                font-size: 1.8rem;
+                margin-bottom: 12px;
+            }
+
+            .page-hero p {
+                font-size: 0.9rem;
+            }
+
+            .page-hero-inner {
+                max-width: 100%;
+            }
+
+            .steps-bar {
+                padding: 12px 16px;
+                top: 60px;
+                gap: 8px;
+                overflow-x: auto;
+            }
+
+            .step-wrap {
+                min-width: max-content;
+            }
+
+            .step-circle {
+                width: 28px;
+                height: 28px;
+                font-size: 0.7rem;
+            }
+
+            .step-label {
+                display: none;
+            }
+
+            .step-connector {
+                width: 24px;
+                margin: 0 4px;
+            }
+
+            .form-card {
+                padding: 24px;
+                border-radius: 16px;
+            }
+
+            .form-card h2 {
+                font-size: 1.3rem;
+            }
+
+            .admission-wrap {
+                padding: 24px 16px;
+                max-width: 100%;
+            }
+
+            .form-nav {
+                flex-direction: column-reverse;
+                gap: 12px;
+            }
+
+            .btn-next,
+            .btn-prev {
+                width: 100%;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr !important;
+            }
+
+            .success-box {
+                padding: 40px 24px;
+                border-radius: 16px;
+            }
+
+            .success-box h2 {
+                font-size: 1.5rem;
+            }
+
+            .success-icon {
+                width: 70px;
+                height: 70px;
+                font-size: 1.8rem;
+                margin-bottom: 16px;
+            }
+
+            .code-display {
+                font-size: 1.3rem;
+                padding: 12px 24px;
+                letter-spacing: 4px;
+            }
+
+            #track {
+                padding: 40px 20px;
+            }
+
+            .track-card {
+                padding: 24px;
+                max-width: 100%;
+            }
+
+            .track-card h2 {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-hero {
+                min-height: 35vh;
+                padding: 60px 16px 30px;
+            }
+
+            .page-hero h1 {
+                font-size: 1.4rem;
+            }
+
+            .page-hero p {
+                font-size: 0.85rem;
+            }
+
+            .steps-bar {
+                padding: 10px 12px;
+            }
+
+            .step-circle {
+                width: 24px;
+                height: 24px;
+                font-size: 0.65rem;
+            }
+
+            .step-connector {
+                width: 16px;
+                margin: 0 2px;
+            }
+
+            .form-card {
+                padding: 16px;
+            }
+
+            .form-card h2 {
+                font-size: 1.15rem;
+            }
+
+            .form-card .sub {
+                font-size: 0.8rem;
+            }
+
+            .btn-next,
+            .btn-prev {
+                font-size: 0.8rem;
+                padding: 10px 16px;
+            }
+
+            .success-box {
+                padding: 32px 16px;
+                border-radius: 14px;
+            }
+
+            .success-box h2 {
+                font-size: 1.2rem;
+            }
+
+            .success-box p {
+                font-size: 0.85rem;
+            }
+
+            .code-display {
+                font-size: 1rem;
+                padding: 10px 16px;
+                letter-spacing: 2px;
+            }
+
+            .track-card {
+                padding: 16px;
+            }
+        }
+    </style>
+    <link rel="icon" type="image/jpeg" href="./larbec piccs/image1.jpeg">
+</head>
+
+<body>
+
+    <!-- LOADING SCREEN -->
+    <div id="loading-screen">
+        <div class="loader-crest"><img src="larbec piccs/image1.jpeg" alt="Larbec Logo"
+                onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><i
+                class="fas fa-graduation-cap" style="display:none;color:var(--violet);font-size:2.2rem"></i></div>
+        <div class="loader-name">Larbec International</div>
+        <div class="loader-sub">Admissions 2026/2027</div>
+        <div class="loader-bar">
+            <div class="loader-fill"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toast-msg"></span></div>
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-box" id="modal-box">
+            <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <!-- NAV -->
+    <!-- ═══ NAVBAR ═══ -->
+    <nav id="mainNav">
+        <a class="nav-brand" href="index.html">
+            <div class="nav-logo"><img src="larbec piccs/image1.jpeg" alt="Larbec International Logo"></div>
+            <div class="nav-title"><span>Larbec International</span><small>School · Ghana</small></div>
+        </a>
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="nav-container" id="navContainer">
+            <div class="nav-links">
+                <a class="nav-link" href="index.html">Home</a>
+                <a class="nav-link" href="index.html#about">About</a>
+                <div class="nav-dropdown">
+                    <a class="nav-link">Academics <i class="fas fa-chevron-down"
+                            style="font-size:.6rem;margin-left:2px"></i></a>
+                    <div class="dropdown-menu">
+                        <a href="academics.html#overview">Overview</a>
+                        <a href="academics.html#curriculum">Curriculum</a>
+                        <a href="academics.html#levels">School Levels</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="academics.html#ict">STEM &amp; Technology</a>
+                        <a href="academics.html#smartribe">Special Programs</a>
+                        <a href="academics.html#elearning">Support &amp; Resources</a>
+                    </div>
+                </div>
+                <a class="nav-link" href="index.html#facilities">Facilities</a>
+                <a class="nav-link" href="gallery.html">Gallery</a>
+                <a class="nav-link" href="index.html#news-blogs">News &amp; Blogs</a>
+                <a class="nav-link" href="index.html#contact">Contact</a>
+            </div>
+            <div class="nav-cta">
+                <a class="btn-nav-portal" href="student-portal.html"><i class="fas fa-sign-in-alt"></i> Portal</a>
+                <a class="btn-nav-apply active" href="admission.html">Apply Now</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <div class="page-hero">
+        <div class="page-hero-inner" data-scroll-animation="top">
+
+            <h1>Apply to Larbec International Academy</h1>
+            <p>Complete your online application in 4 easy steps. You'll receive a unique Admission Code to track your
+                application status at any time.</p>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                <button class="btn-primary" style="color:var(--deep)"
+                    onclick="document.getElementById('apply-section').scrollIntoView({behavior:'smooth'})"><i
+                        class="fas fa-pen-to-square"></i> New Application</button>
+                <button class="btn-secondary"
+                    onclick="document.getElementById('track').scrollIntoView({behavior:'smooth'})"><i
+                        class="fas fa-search"></i> Track Application</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STEP CARDS GUIDE -->
+    <div style="background:var(--bg);padding:48px 20px;border-bottom:1px solid var(--border)">
+        <div style="max-width:1000px;margin:0 auto">
+            <div style="text-align:center;margin-bottom:40px">
+                <h2 style="font-family:'Playfair Display',serif;font-size:2rem;color:var(--deep);margin-bottom:8px">How
+                    to Apply</h2>
+                <p style="color:var(--text-muted);font-size:.95rem">Follow these 4 simple steps to complete your
+                    application</p>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px">
+                <!-- STEP 1 -->
+                <div style="background:var(--white);border:2px solid var(--border);border-radius:14px;padding:24px;text-align:center;transition:all .3s;cursor:pointer"
+                    onmouseover="this.style.borderColor='var(--violet)';this.style.boxShadow='0 8px 24px rgba(124,58,237,.15)'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+                    <div
+                        style="width:60px;height:60px;background-color:var(--violet);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem;color:var(--deep);font-weight:700">
+                        1</div>
+                    <h3 style="color:var(--deep);font-size:1.1rem;margin:0 0 12px 0;font-weight:600">Student Information
+                    </h3>
+                    <p style="color:var(--text-muted);font-size:.85rem;line-height:1.6;margin:0">Provide basic student
+                        details including name, date of birth, contact information, and home address.</p>
+                </div>
+                <!-- STEP 2 -->
+                <div style="background:var(--white);border:2px solid var(--border);border-radius:14px;padding:24px;text-align:center;transition:all .3s;cursor:pointer"
+                    onmouseover="this.style.borderColor='var(--violet)';this.style.boxShadow='0 8px 24px rgba(124,58,237,.15)'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+                    <div
+                        style="width:60px;height:60px;background-color:var(--violet);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem;color:var(--deep);font-weight:700">
+                        2</div>
+                    <h3 style="color:var(--deep);font-size:1.1rem;margin:0 0 12px 0;font-weight:600">Parent/Guardian
+                        Info</h3>
+                    <p style="color:var(--text-muted);font-size:.85rem;line-height:1.6;margin:0">Enter parent or
+                        guardian contact details, relationship to student, and emergency contact information.</p>
+                </div>
+                <!-- STEP 3 -->
+                <div style="background:var(--white);border:2px solid var(--border);border-radius:14px;padding:24px;text-align:center;transition:all .3s;cursor:pointer"
+                    onmouseover="this.style.borderColor='var(--violet)';this.style.boxShadow='0 8px 24px rgba(124,58,237,.15)'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+                    <div
+                        style="width:60px;height:60px;background-color:var(--violet);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem;color:var(--deep);font-weight:700">
+                        3</div>
+                    <h3 style="color:var(--deep);font-size:1.1rem;margin:0 0 12px 0;font-weight:600">Academic
+                        Information</h3>
+                    <p style="color:var(--text-muted);font-size:.85rem;line-height:1.6;margin:0">Select the class level,
+                        academic year, learning mode, and previous school information.</p>
+                </div>
+                <!-- STEP 4 -->
+                <div style="background:var(--white);border:2px solid var(--border);border-radius:14px;padding:24px;text-align:center;transition:all .3s;cursor:pointer"
+                    onmouseover="this.style.borderColor='var(--violet)';this.style.boxShadow='0 8px 24px rgba(124,58,237,.15)'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+                    <div
+                        style="width:60px;height:60px;background-color:var(--violet);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem;color:var(--deep);font-weight:700">
+                        4</div>
+                    <h3 style="color:var(--deep);font-size:1.1rem;margin:0 0 12px 0;font-weight:600">Review &amp; Submit
+                    </h3>
+                    <p style="color:var(--text-muted);font-size:.85rem;line-height:1.6;margin:0">Review all information
+                        for accuracy and submit your application. You'll receive your Admission Code immediately.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STEPS BAR -->
+    <div class="steps-bar" id="steps-bar">
+        <div class="step-wrap">
+            <div class="step-item">
+                <div class="step-circle active" id="sc1">1</div>
+                <div class="step-label active" id="sl1">Student Info</div>
+            </div>
+            <div class="step-connector" id="cn1"></div>
+            <div class="step-item">
+                <div class="step-circle" id="sc2">2</div>
+                <div class="step-label" id="sl2">Parent/Guardian</div>
+            </div>
+            <div class="step-connector" id="cn2"></div>
+            <div class="step-item">
+                <div class="step-circle" id="sc3">3</div>
+                <div class="step-label" id="sl3">Academic Info</div>
+            </div>
+            <div class="step-connector" id="cn3"></div>
+            <div class="step-item">
+                <div class="step-circle" id="sc4">4</div>
+                <div class="step-label" id="sl4">Review &amp; Submit</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORM AREA -->
+    <div class="admission-wrap" id="apply-section" data-scroll-animation="bottom">
+        <form id="admission-form" onsubmit="submitAdmissionForm(event)">
+
+            <!-- STEP 1 – Student Details -->
+            <div class="form-card form-step active" id="fstep1">
+                <h2>Student Personal Information</h2>
+                <div class="sub">Fill in the student's personal details accurately. Fields marked * are required.</div>
+                <div class="form-progress" style="width:16.67%"></div>
+                <div class="form-row">
+                    <div class="form-group"><label class="fl">First Name *</label><input class="fi" id="af-fn"
+                            type="text" placeholder="e.g. Kwame" required></div>
+                    <div class="form-group"><label class="fl">Middle Name</label><input class="fi" id="af-mn"
+                            type="text" placeholder="Middle name"></div>
+                    <div class="form-group"><label class="fl">Last Name *</label><input class="fi" id="af-ln"
+                            type="text" placeholder="e.g. Mensah" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="fl">Date of Birth *</label><input class="fi" id="af-dob"
+                            type="date" required></div>
+                    <div class="form-group"><label class="fl">Gender *</label><select class="fi" id="af-gender"
+                            required>
+                            <option value="">Select...</option>
+                            <option>Male</option>
+                            <option>Female</option>
+                        </select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="fl">Place of Birth</label><input class="fi" id="af-pob"
+                            type="text" placeholder="e.g. Accra"></div>
+                    <div class="form-group"><label class="fl">Mother Tongue</label><input class="fi" id="af-mt"
+                            type="text" placeholder="e.g. Akan"></div>
+
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="fl">Nationality</label><input class="fi" id="af-nation"
+                            type="text" placeholder="e.g. Ghanaian"></div>
+                    <div class="form-group"><label class="fl">Religion</label><input class="fi" id="af-religion"
+                            type="text" placeholder="e.g. Christianity"></div>
+                    <div class="form-group"><label class="fl">Allergies</label><input class="fi" id="af-allergies"
+                            type="text" placeholder="List any allergies or 'None'"></div>
+                </div>
+                <div class="form-group"><label class="fl">Home Address *</label><input class="fi" id="af-addr"
+                        type="text" placeholder="e.g. Atonsu-Fabi, Kumasi" required></div>
+                <div class="form-nav"><span></span><button type="button" class="btn-next" onclick="goStep(2)">Next:
+                        Parent Details <i class="fas fa-arrow-right"></i></button></div>
+            </div>
+
+            <!-- STEP 2 – Parent/Guardian -->
+            <div class="form-card form-step" id="fstep2">
+                <h2>Parent / Guardian Information</h2>
+                <div class="sub">Provide a single primary parent or guardian contact. This email is required for portal
+                    access and result tracking.</div>
+                <div class="form-progress" style="width:33.33%"></div>
+
+                <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid var(--border)">
+                    <div class="form-row">
+                        <div class="form-group"><label class="fl">Primary Contact *</label>
+                            <select class="fi" id="af-parent-type" required>
+                                <option value="">Select role...</option>
+                                <option value="Father">Father</option>
+                                <option value="Mother">Mother</option>
+                                <option value="Guardian">Guardian</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label class="fl">Full Name *</label><input class="fi"
+                                id="af-parent-name" type="text" placeholder="Parent or guardian name" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="fl">Phone *</label><input class="fi" id="af-parent-phone"
+                                type="tel" placeholder="055 XXX XXXX" required></div>
+                        <div class="form-group"><label class="fl">Email *</label><input class="fi" id="af-parent-email"
+                                type="email" placeholder="parent@email.com" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="fl">Relationship (if Guardian)</label><input class="fi"
+                                id="af-parent-relationship" type="text" placeholder="e.g. Uncle, Aunt"></div>
+                        <div class="form-group"><label class="fl">Occupation</label><input class="fi"
+                                id="af-parent-occupation" type="text" placeholder="e.g. Engineer"></div>
+                    </div>
+                    <div class="form-group"><label class="fl">Address</label><input class="fi" id="af-parent-address"
+                            type="text" placeholder="Residential address"></div>
+                </div>
+
+                <div class="form-nav">
+                    <button type="button" class="btn-prev" onclick="goStep(1)"><i class="fas fa-arrow-left"></i>
+                        Back</button>
+                    <button type="button" class="btn-next" onclick="goStep(3)">Next: Academic Info <i
+                            class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- STEP 3 – Academic Info -->
+            <div class="form-card form-step" id="fstep3">
+                <h2>Academic Information</h2>
+                <div class="sub">Tell us about the student's previous education and the class they are applying for.
+                </div>
+                <div class="form-progress" style="width:50%"></div>
+                <div class="form-row">
+                    <div class="form-group"><label class="fl">Class Applying For *</label>
+                        <select class="fi" id="af-class" required>
+                            <option value="">Select class...</option>
+                            <option>Creche</option>
+                            <option>Nursery 1</option>
+                            <option>Nursery 2</option>
+                            <option>Kindergarten 1</option>
+                            <option>Kindergarten 2</option>
+                            <option>Primary 1</option>
+                            <option>Primary 2</option>
+                            <option>Primary 3</option>
+                            <option>Primary 4</option>
+                            <option>Primary 5</option>
+                            <option>Primary 6</option>
+                            <option>JHS 1</option>
+                            <option>JHS 2</option>
+                            <option>JHS 3</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="fl">Academic Year *</label>
+                        <select class="fi" id="af-year" required>
+                            <option value="">Select year...</option>
+                            <option>2026/2027</option>
+                            <option>2027/2028</option>
+                            <option>2028/2029</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="fl">Previous School</label><input class="fi"
+                            id="af-prevschool" type="text" placeholder="Name of previous school"></div>
+                    <div class="form-group"><label class="fl">Last Class Attended</label><input class="fi"
+                            id="af-lastclass" type="text" placeholder="e.g. KG 2"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="fl">Learning Mode </label>
+                        <select class="fi" id="af-mode">
+                            <option value="">Select...</option>
+                            <option>In-Person</option>
+                            <option>Online</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="fl">How did you hear about us?</label>
+                        <select class="fi" id="af-source">
+                            <option value="">Select...</option>
+                            <option>Friend/Family</option>
+                            <option>Social Media</option>
+                            <option>Google</option>
+                            <option>Billboard</option>
+                            <option>Radio/TV</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"><label class="fl">Additional Information</label><textarea class="fi"
+                        id="af-addinfo" placeholder="Any other relevant information..."
+                        style="min-height:80px"></textarea></div>
+                <div class="form-nav">
+                    <button type="button" class="btn-prev" onclick="goStep(2)"><i class="fas fa-arrow-left"></i>
+                        Back</button>
+                    <button type="button" class="btn-next" onclick="goStep(4)">Next: Review and Submit <i
+                            class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- STEP 4 – Review & Submit -->
+            <div class="form-card form-step" id="fstep4">
+                <h2>Review &amp; Submit</h2>
+                <div class="sub">Review your information before submitting. You'll receive your unique Admission Code
+                    immediately after.</div>
+                <div class="form-progress" style="width:100%"></div>
+                <div id="review-summary"
+                    style="background:var(--off-white);border-radius:12px;padding:22px;margin-bottom:22px;font-size:.87rem;line-height:2.1;color:var(--text);border:1px solid var(--border)">
+                </div>
+                <div
+                    style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.18);border-radius:10px;padding:14px;margin-bottom:22px;font-size:.8rem;color:var(--text-muted)">
+                    <i class="fas fa-info-circle" style="color:var(--violet);margin-right:7px"></i>
+                    By submitting, you confirm all information is accurate. A confirmation email will be sent to your
+                    email address and to the school.
+                </div>
+                <!-- Submit progress -->
+                <div id="submit-progress-area"
+                    style="display:none;background:var(--off-white);border-radius:10px;padding:16px;margin-bottom:20px">
+                    <div style="font-size:.84rem;color:var(--deep);margin-bottom:8px;font-weight:600"
+                        id="submit-progress-label">Saving application...</div>
+                    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+                        <div id="submit-progress-bar"
+                            style="height:100%;width:0;background:linear-gradient(90deg,var(--violet),var(--violet-light));border-radius:3px;transition:width .4s">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-nav">
+                    <button type="button" class="btn-prev" onclick="goStep(4)"><i class="fas fa-arrow-left"></i>
+                        Back</button>
+                    <button type="submit" class="btn-next" id="submit-btn"><i class="fas fa-paper-plane"></i> Submit
+                        Application</button>
+                </div>
+            </div>
+
+            <!-- STEP 5 – Success -->
+            <div class="form-step" id="fstep5">
+                <div class="success-box">
+                    <div class="success-icon"><i class="fas fa-check"></i></div>
+                    <h2>Application Submitted Successfully! ✓</h2>
+                    <p style="font-size:.95rem;color:rgba(255,255,255,.9);margin-bottom:28px">Your application has been
+                        received and saved. A confirmation email has been sent to the email address provided in your
+                        application. The admissions team will review your submission shortly.</p>
+
+                    <!-- ADMISSION CODE SECTION -->
+                    <div
+                        style="background:rgba(124,58,237,.15);border:2px solid var(--violet);border-radius:14px;padding:28px;margin:28px 0;text-align:center; color: white;">
+                        <p
+                            style="color:white;font-size:.8rem;font-weight:600;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:1px">
+                            Your Unique Admission Code</p>
+                        <div class="code-display" id="generated-code"
+                            style="font-size:1.8rem;letter-spacing:3px;font-family:monospace;margin:16px 0;color:var(--white)">
+                            Larbec-2026-0000</div>
+                        <p style="font-size:.75rem;color:white;margin:12px 0 0 0">📌 Save this code —
+                            you'll need it to access your student portal and track your application</p>
+                    </div>
+
+                    <!-- HOW TO ACCESS PORTAL -->
+                    <div
+                        style="background:rgba(124,58,237,.15);border-left:4px solid var(--violet);border-radius:8px;padding:22px;margin:28px 0;text-align:left; color: white;">
+                        <p style="color:var(--white);font-weight:700;font-size:.95rem;margin:0 0 16px 0"><i
+                                class="fas fa-sign-in-alt" style="margin-right:10px"></i>Access Your Student Portal</p>
+                        <div style="font-size:.85rem;line-height:2;color:rgba(255,255,255,.85)">
+                            <div style="background:rgba(10,22,40,.4);border-radius:8px;padding:14px;margin-bottom:12px">
+                                <p style="color:var(--white);font-weight:600;margin:0 0 6px 0">Step 1: Go to Student
+                                    Portal</p>
+                                <p style="margin:0">Click the "<strong>Go to Student Portal</strong>" button below, or
+                                    visit <code
+                                        style="background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.75rem">student-portal.html</code>
+                                </p>
+                            </div>
+                            <div style="background:rgba(10,22,40,.4);border-radius:8px;padding:14px;margin-bottom:12px">
+                                <p style="color:var(--white);font-weight:600;margin:0 0 6px 0">Step 2: Sign In</p>
+                                <p style="margin:0">Log in using one of these options:<br>
+                                    <strong style="color:var(--violet)">Option A:</strong> Your Admission Code (shown
+                                    above)<br>
+                                    <strong style="color:var(--violet)">Option B:</strong> Parent email (the email used
+                                    in
+                                    this application)
+                                </p>
+                            </div>
+                            <div style="background:rgba(10,22,40,.4);border-radius:8px;padding:14px">
+                                <p style="color:var(--white);font-weight:600;margin:0 0 6px 0">Step 3: Track & Manage
+                                </p>
+                                <p style="margin:0">View your application status, receive notifications from the
+                                    admissions team, and download your acceptance/rejection letter once a decision is
+                                    made</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TIMELINE -->
+                    <div
+                        style="background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.2);border-radius:12px;padding:24px;margin:28px 0;text-align:left">
+                        <p style="color:var(--violet);font-weight:600;margin-bottom:16px"><i class="fas fa-clock"
+                                style="margin-right:8px"></i>Timeline</p>
+                        <ul
+                            style="list-style:none;padding:0;font-size:.85rem;line-height:2.2;color:rgba(255,255,255,.85)">
+                            <li style="margin-bottom:12px"><strong>📋 Within 24 hours:</strong> Your application is
+                                logged into our system and assigned a case number</li>
+                            <li style="margin-bottom:12px"><strong>⏱️ 5–7 working days:</strong> Admissions team reviews
+                                your complete application</li>
+                            <li style="margin-bottom:12px"><strong>📧 1-2 weeks:</strong> Initial decision made (you'll
+                                see notification in your portal)</li>
+                            <li><strong>📄 Upon acceptance:</strong> Download your official Admission Letter from your
+                                Student Portal</li>
+                        </ul>
+                    </div>
+
+                    <!-- ENTRANCE EXAMS NOTICE -->
+                    <div
+                        style="background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.25);border-radius:12px;padding:24px;margin:28px 0;text-align:left">
+                        <p style="color:var(--violet);font-weight:600;margin-bottom:16px"><i
+                                class="fas fa-graduation-cap" style="margin-right:8px"></i>Entrance Assessment</p>
+                        <div style="font-size:.85rem;line-height:1.8;color:rgba(255,255,255,.85)">
+                            <p style="margin:0 0 12px 0">Selected applicants may be invited to complete an
+                                <strong>entrance assessment</strong> as part of our admissions process. This helps us
+                                understand your learning style and academic readiness.
+                            </p>
+                            <p style="margin:0"><strong style="color:var(--violet)">📍 All entrance assessment details,
+                                    including dates and instructions,</strong> will be communicated directly through
+                                your Student Portal once you've logged in with your Admission Code. Check your portal
+                                regularly for updates!</p>
+                        </div>
+                    </div>
+
+                    <!-- ACTION BUTTONS -->
+                    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:28px">
+                        <a class="btn-primary" href="student-portal.html"
+                            style="color:var(--deep);display:inline-flex;align-items:center;gap:8px"><i
+                                class="fas fa-sign-in-alt"></i> Go to Student Portal</a>
+                        <a class="btn-secondary" href="index.html"><i class="fas fa-home"></i> Back to Home</a>
+                    </div>
+
+                    <!-- CONTACT SUPPORT -->
+                    <div
+                        style="text-align:center;margin-top:28px;padding-top:20px;border-top:1px solid rgba(124,58,237,.15)">
+                        <p style="font-size:.8rem;color:rgba(255,255,255,.6);margin:0">Questions? Contact the admissions
+                            team at <strong style="color:var(--violet)">kofigyansah@gmail.com</strong> or <strong
+                                style="color:var(--violet)">0244417789</strong></p>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- TRACK APPLICATION -->
+    <section id="track">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Track Application</div>
+                <h2 class="section-title">Check Your <em>Status</em></h2>
+                <p class="section-sub" style="text-align:center !important; margin: auto;">Enter your Admission Code or
+                    parent email to
+                    check
+                    the current status of your
+                    application.</p>
+            </div>
+            <div class="track-card">
+                <h2>Application Tracker</h2>
+                <p style="color:var(--text-muted);font-size:.86rem;margin-bottom:22px">Use your Admission Code (e.g.
+                    Larbec-2026-1234) or the parent email used during application.</p>
+                <div class="form-group"><label class="fl">Admission Code or Parent Email</label><input class="fi"
+                        id="track-input" type="text" placeholder="Larbec-2026-XXXX or parent@email.com"></div>
+                <button class="btn-primary" style="width:100%;justify-content:center" onclick="trackApp()"><i
+                        class="fas fa-search"></i> Check Status</button>
+                <div id="track-loading"
+                    style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:.86rem"><i
+                        class="fas fa-spinner fa-spin" style="color:var(--violet);margin-right:8px"></i>Searching
+                    database...</div>
+                <div class="track-result" id="track-result">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                        <strong id="tr-name" style="font-size:.97rem;color:var(--deep)">Name</strong>
+                        <span id="tr-badge" class="status-badge status-pending">Pending</span>
+                    </div>
+                    <div id="tr-details" style="font-size:.84rem;color:var(--text-muted);line-height:2.1"></div>
+                    <div id="tr-msg"
+                        style="display:none;margin-top:14px;padding:13px;background:rgba(124,58,237,.1);border-radius:8px;font-size:.84rem;border-left:3px solid var(--violet)">
+                    </div>
+                    <div style="margin-top:16px;display:flex;gap:10px">
+                        <a class="btn-primary" href="student-portal.html"
+                            style="color:var(--deep);font-size:.84rem;padding:10px 20px"><i
+                                class="fas fa-sign-in-alt"></i> Open Student Portal</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a class="nav-brand" href="index.html" style="text-decoration:none">
+                        <div class="nav-logo"><img src="larbec piccs/image1.jpeg" alt="Larbec"
+                                onerror="this.style.display='none'"><i class="fas fa-graduation-cap"
+                                style="display:none;color:var(--violet)"></i></div>
+                        <div class="nav-title"><span>Larbec International</span><small>School · Ghana</small></div>
+                    </a>
+                    <p>"A Modern, Quality Education is Life's Richest Legacy."</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4><a href="index.html">Home</a><a href="academics.html">Academics</a><a
+                        href="index.html#contact">Contact</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Admissions</h4><a href="admission.html">Apply Online</a><a href="student-portal.html">Student
+                        Portal</a><a href="admin-portal.html">Admin Login</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Contact</h4><a>0244417789</a><a>kofigyansah@gmail.com</a><a>Atonsu-Fabi, Ghana</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Larbec International Academy · All Rights Reserved</p>
+            </div>
+        </div>
+    </footer>
+    <button id="backToTop" onclick="scrollToTop()" title="Back to Top"><i class="fas fa-arrow-up"></i></button>
+
+    <script>
+        /* ── SMART LOADING SCREEN ── */
+        function initSmartLoadingScreen() {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (!loadingScreen) return;
+
+            // Check if this is an internal page navigation
+            const navTimestamp = sessionStorage.getItem('LarbecInternalNav');
+            const isInternalNav = navTimestamp && (Date.now() - parseInt(navTimestamp)) < 2000;
+
+            // If internal navigation, hide loading screen immediately
+            if (isInternalNav) {
+                loadingScreen.classList.add('hidden');
+                sessionStorage.removeItem('LarbecInternalNav');
+            } else {
+                // Fresh load/refresh → show loading screen normally
+                window.addEventListener('load', () => {
+                    setTimeout(() => {
+                        loadingScreen?.classList.add('hidden');
+                    }, 2200);
+                });
+            }
+        }
+
+        // Setup internal link navigation tracking
+        function setupInternalNavigation() {
+            document.querySelectorAll('a[href$=".html"]').forEach(link => {
+                if (!link.href.includes('http://') && !link.href.includes('https://')) {
+                    link.addEventListener('click', () => {
+                        sessionStorage.setItem('LarbecInternalNav', Date.now().toString());
+                    });
+                }
+            });
+        }
+
+        // Initialize on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                initSmartLoadingScreen();
+                setupInternalNavigation();
+            });
+        } else {
+            initSmartLoadingScreen();
+            setupInternalNavigation();
+        }
+        /* ── PAGE INIT ── */
+        window.addEventListener('scroll', () => {
+            document.getElementById('mainNav')?.classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        /* ── MOBILE NAV ── */
+        const menuToggle = document.getElementById('menuToggle');
+        const navContainer = document.getElementById('navContainer');
+
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('active');
+            navContainer.classList.toggle('active');
+        });
+
+        // Close menu when clicking on a link (but not dropdown toggles)
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                // Don't close menu if this is a dropdown toggle on mobile
+                if (!link.closest('.nav-dropdown') || window.innerWidth > 768) {
+                    menuToggle.classList.remove('active');
+                    navContainer.classList.remove('active');
+                }
+            });
+        });
+
+        // Close menu when clicking on CTA buttons
+        document.querySelectorAll('.nav-cta a').forEach(link => {
+            link.addEventListener('click', () => {
+                menuToggle.classList.remove('active');
+                navContainer.classList.remove('active');
+            });
+        });
+
+        // Handle dropdown menus in mobile view
+        document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
+            const link = dropdown.querySelector('.nav-link') || dropdown.querySelector('.btn-nav-portal');
+            if (link) {
+                link.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 768) {
+                        e.preventDefault();
+                        dropdown.classList.toggle('active');
+                    }
+                });
+            }
+        });
+
+        /* ── MULTI-STEP FORM ── */
+        let currentStep = 1;
+
+        function goStep(n) {
+            if (n > currentStep && !validateStep(currentStep)) return;
+            document.querySelectorAll('.form-step').forEach((el, i) => el.classList.toggle('active', i === n - 1));
+            for (let i = 1; i <= 4; i++) {
+                const c = document.getElementById('sc' + i);
+                const l = document.getElementById('sl' + i);
+                const cn = document.getElementById('cn' + i);
+                if (!c) continue;
+                c.className = 'step-circle' + (i < n ? ' done' : i === n ? ' active' : '');
+                c.innerHTML = i < n ? '<i class="fas fa-check" style="font-size:.6rem"></i>' : i;
+                if (l) l.className = 'step-label' + (i === n ? ' active' : '');
+                if (cn) cn.className = 'step-connector' + (i < n ? ' done' : '');
+            }
+            currentStep = n;
+            if (n === 4) buildReview();
+            document.getElementById('apply-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function validateStep(n) {
+            const required = {
+                1: ['af-fn', 'af-ln', 'af-dob', 'af-gender', 'af-addr'],
+                2: ['af-parent-type', 'af-parent-name', 'af-parent-phone', 'af-parent-email'],
+                3: ['af-class', 'af-year', 'af-mode']
+            };
+            for (const id of (required[n] || [])) {
+                const el = document.getElementById(id);
+                if (!el || !el.value.trim()) {
+                    const lbl = document.querySelector(`label[for="${id}"], .fl`);
+                    showToast(`Please fill in the required field: ${el?.previousElementSibling?.textContent || id}`, 'error');
+                    el?.focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function buildReview() {
+            const fn = v('af-fn'), mn = v('af-mn'), ln = v('af-ln');
+            const dob = v('af-dob'), gender = v('af-gender');
+            const parentType = v('af-parent-type'), parentName = v('af-parent-name');
+            const parentPhone = v('af-parent-phone'), parentEmail = v('af-parent-email');
+            const parentRel = v('af-parent-relationship'), parentOcc = v('af-parent-occupation');
+            const cls = v('af-class'), yr = v('af-year'), mode = v('af-mode');
+
+            document.getElementById('review-summary').innerHTML = `
+    <div style="margin-bottom:12px">
+      <span style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Student</span><br>
+      <strong>${fn} ${mn} ${ln}</strong> &nbsp;·&nbsp; ${gender} &nbsp;·&nbsp; DOB: ${dob}
+    </div>
+    <div style="margin-bottom:12px">
+      <span style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Primary Contact</span><br>
+      ${parentType}: <strong>${parentName}</strong> · ${parentPhone}<br>
+      Email: <strong>${parentEmail}</strong><br>
+      ${parentRel !== '—' ? `Relationship: <strong>${parentRel}</strong><br>` : ''}
+      ${parentOcc !== '—' ? `Occupation: <strong>${parentOcc}</strong>` : ''}
+    </div>
+    <div>
+      <span style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Application</span><br>
+      Class: <strong>${cls}</strong> &nbsp;·&nbsp; Year: <strong>${yr}</strong> &nbsp;·&nbsp; Mode: <strong>${mode}</strong>
+    </div>`;
+        }
+
+        /* ── SUBMISSION ── */
+        async function submitAdmissionForm(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+            const progressArea = document.getElementById('submit-progress-area');
+            const progressBar = document.getElementById('submit-progress-bar');
+            const progressLbl = document.getElementById('submit-progress-label');
+            progressArea.style.display = 'block';
+
+            const setProgress = (pct, label) => {
+                progressBar.style.width = pct + '%';
+                progressLbl.textContent = label;
+            };
+
+            try {
+                setProgress(10, 'Saving application to database...');
+
+                // ── Build data object ──
+                const data = {
+                    // Student
+                    studentFirstName: val('af-fn'),
+                    studentMiddleName: val('af-mn'),
+                    studentLastName: val('af-ln'),
+                    dateOfBirth: val('af-dob'),
+                    gender: val('af-gender'),
+                    placeOfBirth: val('af-pob'),
+                    motherTongue: val('af-mt'),
+                    bloodGroup: val('af-bg'),
+                    nationality: val('af-nation'),
+                    religion: val('af-religion'),
+                    allergies: val('af-allergies'),
+                    homeAddress: val('af-addr'),
+                    // Primary Parent/Guardian
+                    parentRole: val('af-parent-type'),
+                    parentName: val('af-parent-name'),
+                    parentPhone: val('af-parent-phone'),
+                    parentEmail: val('af-parent-email'),
+                    parentRelationship: val('af-parent-relationship'),
+                    parentOccupation: val('af-parent-occupation'),
+                    parentAddress: val('af-parent-address'),
+                    // Academic
+                    classApplied: val('af-class'),
+                    academicYear: val('af-year'),
+                    previousSchool: val('af-prevschool'),
+                    lastClass: val('af-lastclass'),
+                    learningMode: val('af-mode'),
+                    heardFrom: val('af-source'),
+                    additionalInfo: val('af-addinfo'),
+                    status: 'pending',
+                    submittedAt: Date.now()
+                };
+
+                if (!data.studentFirstName || !data.classApplied || !data.learningMode) {
+                    throw new Error('Required fields are missing. Please go back and check.');
+                }
+
+                // ── 1. Save application record to Firebase ──
+                const code = await window.saveApplication(data);
+                setProgress(50, 'Application saved...');
+                try {
+                    await window.notifySchoolByEmail(data, code);
+                } catch (emailErr) {
+                    console.warn('School email notification failed (non-critical):', emailErr);
+                }
+                try {
+                    await window.notifyApplicantByEmail(data, code);
+                } catch (emailErr) {
+                    console.warn('Applicant thank you email failed (non-critical):', emailErr);
+                }
+
+                setProgress(100, 'Complete!');
+
+                // ── 4. Show success ──
+                setTimeout(() => {
+                    document.getElementById('generated-code').textContent = code;
+                    goStep(5);
+                    document.getElementById('steps-bar').style.display = 'none';
+                    progressArea.style.display = 'none';
+                    showToast('Application submitted! Your code: ' + code, 'success');
+                }, 600);
+
+            } catch (err) {
+                console.error('Submission error:', err);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Application';
+                progressArea.style.display = 'none';
+                showToast(err.message || 'Submission failed. Please try again.', 'error');
+            }
+        }
+
+        /* ── TRACK APP ── */
+        async function trackApp() {
+            const val = document.getElementById('track-input').value.trim();
+            if (!val) { showToast('Please enter an admission code or email.', 'error'); return; }
+            document.getElementById('track-loading').style.display = 'block';
+            document.getElementById('track-result').classList.remove('show');
+            try {
+                let app = null;
+                if (val.toUpperCase().startsWith('Larbec-')) {
+                    app = await window.getApplicationByCode(val.toUpperCase());
+                } else {
+                    app = await window.getApplicationByEmail(val.toLowerCase());
+                }
+                document.getElementById('track-loading').style.display = 'none';
+                if (!app) { showToast('No application found. Please check and try again.', 'error'); return; }
+
+                document.getElementById('tr-name').textContent = (app.studentFirstName || '') + ' ' + (app.studentLastName || '');
+                const badge = document.getElementById('tr-badge');
+                const statusMap = { pending: 'status-pending', accepted: 'status-accepted', rejected: 'status-rejected', docs: 'status-docs' };
+                badge.className = 'status-badge ' + (statusMap[app.status] || 'status-pending');
+                badge.textContent = { pending: 'Under Review', accepted: 'Accepted', rejected: 'Rejected', docs: 'Docs Required' }[app.status] || 'Pending';
+
+                const dt = app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                document.getElementById('tr-details').innerHTML =
+                    `Code: <strong style="color:var(--violet)">${app.id}</strong> &nbsp;|&nbsp; Class: <strong>${app.classApplied || '—'}</strong> &nbsp;|&nbsp; Year: <strong>${app.academicYear || '—'}</strong><br>
+       Mode: <strong>${app.learningMode || '—'}</strong> &nbsp;|&nbsp; Submitted: <strong>${dt}</strong>`;
+
+                const msgEl = document.getElementById('tr-msg');
+                const msgMap = {
+                    accepted: '<i class="fas fa-check-circle" style="color:var(--success);margin-right:8px"></i>Congratulations! Admission offered. Log into your portal to download the admission letter.',
+                    rejected: '<i class="fas fa-times-circle" style="color:var(--error);margin-right:8px"></i>We regret your application was not successful. Log in to your portal for the official letter.',
+                    docs: '<i class="fas fa-folder-open" style="color:var(--violet);margin-right:8px"></i>Additional documents have been requested. Please log in to your portal to upload them.'
+                };
+                if (msgMap[app.status]) { msgEl.style.display = 'block'; msgEl.innerHTML = msgMap[app.status]; }
+                else { msgEl.style.display = 'none'; }
+                document.getElementById('track-result').classList.add('show');
+            } catch (err) {
+                document.getElementById('track-loading').style.display = 'none';
+                showToast('Error fetching application. Check your Firebase config.', 'error');
+            }
+        }
+
+        /* ── MODAL HELPERS ── */
+        function openModal(html) {
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-overlay').classList.add('open');
+        }
+        function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+        document.getElementById('modal-overlay')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+        /* ── TOAST ── */
+        function showToast(msg, type = 'info') {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            const ico = t.querySelector('i');
+            if (ico) ico.className = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+            document.getElementById('toast-msg').textContent = msg;
+            t.className = `toast ${type} show`;
+            setTimeout(() => t.classList.remove('show'), 4000);
+        }
+
+        /* ── VALUE HELPERS ── */
+        function v(id) { return document.getElementById(id)?.value?.trim() || '—'; }
+        function val(id) { return document.getElementById(id)?.value?.trim() || ''; }
+    </script>
+    <script src="scroll-reveal.js"></script>
+</body>
+
+</html>

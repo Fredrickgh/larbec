@@ -1,0 +1,2184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Student Portal – Larbec International Academy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet" />
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --gold: #7C3AED;
+            --gold-light: #A78BFA;
+            --deep: #0A1628;
+            --navy: #12284C;
+            --navy-mid: #1A3A6B;
+            --white: #fff;
+            --off: #F7F5F0;
+            --text: #1C1C1C;
+            --muted: #7A7A7A;
+            --border: #E2D9C5;
+            --success: #2E7D32;
+            --error: #C62828;
+            --warn: #E65100;
+            --sb: 248px;
+            --topbar: 62px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, var(--off) 0%, #FEFCF8 100%);
+            color: var(--text);
+            overflow-x: hidden
+        }
+
+        /* LOADING */
+        #splash {
+            position: fixed;
+            inset: 0;
+            background: var(--deep);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity .6s, visibility .6s
+        }
+
+        #splash.gone {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none
+        }
+
+        .splash-ring {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(201, 168, 76, .2);
+            border-top-color: var(--violet);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px
+        }
+
+        .splash-name {
+            font-family: 'Playfair Display', serif;
+            color: var(--white);
+            font-size: 1.5rem;
+            letter-spacing: 2px
+        }
+
+        .splash-sub {
+            color: var(--violet);
+            font-size: .68rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 5px
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        /* LOGIN */
+        #login-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, rgba(10, 22, 40, 0.75) 0%), url('./larbec piccs/hero1.png') center/cover no-repeat;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px
+        }
+
+        .login-box {
+            background: var(--violet);
+            backdrop-filter: blur(10px);
+            border: 1.5px solid rgba(124, 58, 237, 0.3);
+            border-radius: 28px;
+            padding: 50px;
+            width: 100%;
+            max-width: 440px;
+            animation: fadeUp .5s ease;
+
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+
+        }
+
+        .login-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+        }
+
+        .login-logo {
+            width: 50px;
+            height: 50px;
+            background: #7C3AED;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+        }
+
+        .login-logo img {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
+        .login-school-info h3 {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .login-school-info p {
+            color: white;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .login-crest {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: violet;
+            border: 2px solid rgba(124, 58, 237, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            color: #fff;
+            font-size: 1.6rem;
+        }
+
+        .login-box h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--white);
+            font-size: 1.55rem;
+            text-align: center;
+            margin-bottom: 5px
+        }
+
+        .login-box p {
+            color: white;
+            font-size: .82rem;
+            text-align: center;
+            margin-bottom: 28px
+        }
+
+        .fl {
+            display: block;
+            font-size: .73rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 5px;
+            letter-spacing: .5px;
+            text-transform: uppercase
+        }
+
+        .fl-dark {
+            color: var(--muted)
+        }
+
+        .fi {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1.5px solid rgba(124, 58, 237, 0.25);
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            color: #fff;
+            background: rgba(124, 58, 237, 0.06);
+            outline: none;
+            transition: all 0.25s ease;
+            margin-bottom: 16px;
+        }
+
+        .fi:focus {
+            border-color: #7C3AED;
+            background: #7C3AED;
+
+        }
+
+        .fi::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .fi-d {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 9px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: .88rem;
+            color: var(--text);
+            background: var(--off);
+            outline: none;
+            transition: all .2s
+        }
+
+        .fi-d:focus {
+            border-color: var(--violet);
+            background: var(--white)
+        }
+
+        .fi-d::placeholder {
+            color: var(--muted)
+        }
+
+        .btn-login {
+            width: 100%;
+            background: #7C3AED;
+            color: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.23, 1, 0.320, 1);
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+            box-shadow: 0 12px 30px rgba(124, 58, 237, 0.35);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: #7C3AED;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: #6D2FD9;
+            transform: translateY(-3px);
+            box-shadow: 0 18px 45px rgba(124, 58, 237, 0.5);
+        }
+
+        .btn-login:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        .login-tabs {
+            display: flex;
+            gap: 0;
+            background: rgba(124, 58, 237, 0.08);
+            border-radius: 12px;
+            padding: 5px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(124, 58, 237, 0.15);
+        }
+
+        .ltab {
+            flex: 1;
+            padding: 11px;
+            text-align: center;
+            border-radius: 9px;
+            cursor: pointer;
+            font-size: 0.84rem;
+            color: rgba(255, 255, 255, 0.6);
+            transition: all 0.25s ease;
+            font-weight: 500;
+        }
+
+        .ltab:hover {
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(124, 58, 237, 0.05);
+        }
+
+        .ltab.active {
+            background: #7C3AED;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        .login-err {
+            color: #ff6b6b;
+            font-size: .79rem;
+            text-align: center;
+            margin-top: 9px;
+            display: none
+        }
+
+        /* PORTAL */
+        #portal {
+            display: none;
+            flex-direction: row;
+            min-height: 100vh
+        }
+
+        #portal.show {
+            display: flex
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sb);
+            background: var(--deep);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 300;
+            border-right: 1px solid rgba(201, 168, 76, .1)
+        }
+
+        .sb-head {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(201, 168, 76, .1);
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .sb-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            background: rgba(201, 168, 76, .1);
+            border: 1px solid rgba(201, 168, 76, .25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--violet);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .sb-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .sb-school {
+            font-family: 'Playfair Display', serif;
+            color: var(--white);
+            font-size: .86rem;
+            line-height: 1.2
+        }
+
+        .sb-role {
+            color: var(--violet);
+            font-size: .6rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 2px
+        }
+
+        .sb-nav {
+            padding: 14px 9px;
+            flex: 1
+        }
+
+        .sb-section {
+            font-size: .58rem;
+            color: rgba(255, 255, 255, .24);
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            padding: 11px 10px 4px
+        }
+
+        .sb-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 11px;
+            border-radius: 8px;
+            color: white;
+            font-size: .82rem;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none;
+            margin-bottom: 2px;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            position: relative
+        }
+
+        .sb-link:hover {
+            background: rgba(255, 255, 255, .05);
+            color: rgba(255, 255, 255, .9)
+        }
+
+        .sb-link.active {
+            background: rgba(201, 168, 76, .12);
+            color: var(--white);
+            font-weight: 600
+        }
+
+        .sb-link i {
+            width: 16px;
+            text-align: center;
+            font-size: .84rem
+        }
+
+        .sb-badge {
+            margin-left: auto;
+            background: var(--violet);
+            color: var(--deep);
+            font-size: .6rem;
+            font-weight: 700;
+            border-radius: 9px;
+            padding: 2px 6px
+        }
+
+        .sb-footer {
+            padding: 13px;
+            border-top: 1px solid rgba(201, 168, 76, .1)
+        }
+
+        .sb-user {
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .sb-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--violet), var(--violet-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--deep);
+            font-size: .76rem;
+            flex-shrink: 0
+        }
+
+        .sb-uname {
+            color: var(--white);
+            font-size: .79rem;
+            font-weight: 600
+        }
+
+        .sb-uemail {
+            color: rgba(255, 255, 255, .32);
+            font-size: .65rem
+        }
+
+        .sb-logout {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, .3);
+            cursor: pointer;
+            transition: color .2s;
+            font-size: .86rem
+        }
+
+        .sb-logout:hover {
+            color: var(--error)
+        }
+
+        /* MAIN */
+        .main {
+            margin-left: var(--sb);
+            flex: 1;
+            min-height: 100vh
+        }
+
+        .topbar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            height: var(--topbar);
+            padding: 0 26px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 200
+        }
+
+        .topbar h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.18rem;
+            color: var(--deep)
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 11px
+        }
+
+        .notif-btn {
+            position: relative;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--muted);
+            background: var(--white);
+            transition: all .2s
+        }
+
+        .notif-btn:hover {
+            border-color: var(--violet);
+            color: var(--violet)
+        }
+
+        .notif-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 7px;
+            height: 7px;
+            background: var(--violet);
+            border-radius: 50%;
+            border: 1.5px solid var(--white);
+            display: none
+        }
+
+        .topbar-link {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--muted);
+            text-decoration: none;
+            background: var(--white);
+            transition: all .2s;
+            font-size: .9rem
+        }
+
+        .topbar-link:hover {
+            border-color: var(--violet);
+            color: var(--violet);
+            background: rgba(201, 168, 76, .05)
+        }
+
+        .notif-dot.show {
+            display: block
+        }
+
+        .content {
+            padding: 24px
+        }
+
+        .section {
+            display: none
+        }
+
+        .section.active {
+            display: block
+        }
+
+        /* CARDS */
+        .dash-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 22px
+        }
+
+        .dcard {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px
+        }
+
+        .dcard-val {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--deep);
+            line-height: 1;
+            margin-bottom: 4px
+        }
+
+        .dcard-label {
+            font-size: .7rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px
+        }
+
+        .dcard.c-violet .dcard-val {
+            color: var(--violet)
+        }
+
+        .dcard.c-green .dcard-val {
+            color: var(--success)
+        }
+
+        .dcard.c-warn .dcard-val {
+            color: var(--warn)
+        }
+
+        .dcard.c-red .dcard-val {
+            color: var(--error)
+        }
+
+        /* WHITE BOX */
+        .wbox {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            padding: 22px;
+            margin-bottom: 18px
+        }
+
+        .wbox-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.08rem;
+            color: var(--deep);
+            margin-bottom: 14px
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px
+        }
+
+        /* STATUS */
+        .sbadge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 11px;
+            border-radius: 20px;
+            font-size: .73rem;
+            font-weight: 600
+        }
+
+        .sbadge-pending {
+            background: rgba(230, 81, 0, .1);
+            color: var(--warn)
+        }
+
+        .sbadge-accepted {
+            background: rgba(46, 125, 50, .1);
+            color: var(--success)
+        }
+
+        .sbadge-rejected {
+            background: rgba(198, 40, 40, .1);
+            color: var(--error)
+        }
+
+        .sbadge-docs {
+            background: rgba(201, 168, 76, .1);
+            color: var(--violet)
+        }
+
+        /* TIMELINE */
+        .timeline {
+            position: relative
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border)
+        }
+
+        .tl-item {
+            position: relative;
+            padding-left: 36px;
+            margin-bottom: 18px
+        }
+
+        .tl-dot {
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .tl-dot.done {
+            border-color: var(--success);
+            background: var(--success)
+        }
+
+        .tl-dot.active {
+            border-color: var(--violet);
+            background: var(--violet)
+        }
+
+        .tl-dot.dim {
+            opacity: .4
+        }
+
+        .tl-dot i {
+            font-size: .46rem;
+            color: var(--white)
+        }
+
+        .tl-box {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 12px 15px
+        }
+
+        .tl-date {
+            font-size: .7rem;
+            color: var(--muted);
+            margin-bottom: 2px
+        }
+
+        .tl-title {
+            font-weight: 600;
+            font-size: .83rem;
+            color: var(--deep)
+        }
+
+        .tl-desc {
+            font-size: .78rem;
+            color: var(--muted);
+            line-height: 1.55;
+            margin-top: 2px
+        }
+
+        /* MESSAGES */
+        .msg-item {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 15px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .msg-item:hover {
+            border-color: var(--violet)
+        }
+
+        .msg-item.unread {
+            border-left: 3px solid var(--violet)
+        }
+
+        .msg-from {
+            font-weight: 600;
+            font-size: .83rem;
+            color: var(--deep)
+        }
+
+        .msg-time {
+            font-size: .7rem;
+            color: var(--muted)
+        }
+
+        .msg-preview {
+            font-size: .79rem;
+            color: var(--muted);
+            margin-top: 3px;
+            line-height: 1.4
+        }
+
+        .msg-body {
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            font-size: .84rem;
+            color: var(--text);
+            line-height: 1.85;
+            white-space: pre-wrap
+        }
+
+        .msg-item.open .msg-body {
+            display: block
+        }
+
+        /* DOCS */
+        .doc-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--off);
+            border-radius: 9px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border)
+        }
+
+        .doc-icon-wrap {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0
+        }
+
+        .di-pdf {
+            background: rgba(198, 40, 40, .1);
+            color: var(--error)
+        }
+
+        .di-img {
+            background: rgba(201, 168, 76, .1);
+            color: var(--violet)
+        }
+
+        .di-id {
+            background: rgba(26, 58, 107, .1);
+            color: var(--navy-mid)
+        }
+
+        .doc-name {
+            font-weight: 600;
+            font-size: .83rem;
+            color: var(--deep)
+        }
+
+        .doc-meta {
+            font-size: .72rem;
+            color: var(--muted);
+            margin-top: 1px
+        }
+
+        .doc-status {
+            margin-left: auto;
+            flex-shrink: 0
+        }
+
+        /* UPLOAD BOX */
+        .upload-box {
+            border: 2px dashed var(--border);
+            border-radius: 11px;
+            padding: 26px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: var(--off);
+            position: relative
+        }
+
+        .upload-box:hover {
+            border-color: var(--violet);
+            background: rgba(201, 168, 76, .02)
+        }
+
+        .upload-box input[type=file] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%
+        }
+
+        .upload-box i {
+            font-size: 1.7rem;
+            color: var(--violet);
+            margin-bottom: 8px;
+            display: block
+        }
+
+        .upload-box p {
+            font-size: .82rem;
+            color: var(--muted)
+        }
+
+        .upload-box strong {
+            color: var(--violet)
+        }
+
+        .upload-box.done {
+            border-color: var(--success);
+            background: rgba(46, 125, 50, .03)
+        }
+
+        /* DETAIL ROW */
+        .detail-row {
+            display: flex;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .detail-row:last-child {
+            border-bottom: none
+        }
+
+        .detail-label {
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: .7px;
+            color: var(--muted);
+            width: 140px;
+            flex-shrink: 0;
+            padding-top: 2px
+        }
+
+        .detail-val {
+            font-size: .84rem;
+            color: var(--deep);
+            font-weight: 500;
+            flex: 1
+        }
+
+        /* LETTER */
+        .letter-wrap {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 40px;
+            max-width: 680px
+        }
+
+        .letter-hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid var(--violet);
+            padding-bottom: 18px;
+            margin-bottom: 24px
+        }
+
+        .letter-school-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: var(--deep)
+        }
+
+        .letter-school-name small {
+            display: block;
+            font-size: .7rem;
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            margin-top: 3px
+        }
+
+        .letter-body p {
+            line-height: 1.92;
+            color: var(--text);
+            margin-bottom: 13px;
+            font-size: .88rem
+        }
+
+        .letter-sig {
+            margin-top: 26px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border)
+        }
+
+        .pdf-btn {
+            background: var(--violet);
+            color: var(--deep);
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: .84rem;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 16px;
+            transition: all .2s;
+            font-family: 'DM Sans', sans-serif
+        }
+
+        .pdf-btn:hover {
+            background: var(--violet-light)
+        }
+
+        /* BTNS */
+        .btn-p {
+            background: var(--violet);
+            color: var(--deep);
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: .86rem;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all .2s;
+            font-family: 'DM Sans', sans-serif
+        }
+
+        .btn-p:hover {
+            background: var(--violet-light)
+        }
+
+        .btn-o {
+            background: transparent;
+            color: var(--muted);
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: .86rem;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all .2s;
+            font-family: 'DM Sans', sans-serif
+        }
+
+        .btn-o:hover {
+            border-color: var(--violet);
+            color: var(--violet)
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            background: var(--deep);
+            border: 1px solid rgba(201, 168, 76, .26);
+            border-radius: 12px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--white);
+            font-size: .83rem;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, .3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all .4s;
+            max-width: 320px
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1
+        }
+
+        .toast i {
+            font-size: .92rem
+        }
+
+        .toast.success i {
+            color: var(--violet)
+        }
+
+        .toast.error i {
+            color: var(--error)
+        }
+
+        /* UPLOAD PROGRESS */
+        .upload-progress {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+            display: none
+        }
+
+        .upload-fill {
+            height: 100%;
+            width: 0;
+            background: var(--violet);
+            transition: width .3s;
+            border-radius: 2px
+        }
+
+        /* ── MOBILE MENU TOGGLE ── */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: var(--deep);
+            cursor: pointer;
+            padding: 8px 12px;
+            margin-right: 10px;
+        }
+
+        .menu-toggle:hover {
+            color: var(--violet);
+        }
+
+        @media(max-width:1024px) {
+            .sidebar {
+                width: 240px;
+            }
+        }
+
+        @media(max-width:768px) {
+            #login-page {
+                background-attachment: scroll;
+            }
+
+            :root {
+                --topbar: 56px;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 70%;
+                max-width: 280px;
+                height: 100vh;
+                background: var(--deep);
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 1000;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .menu-toggle {
+                display: flex;
+                align-items: center;
+            }
+
+            .topbar {
+                padding: 0 16px;
+            }
+
+            .topbar h1 {
+                font-size: 1rem;
+            }
+
+            .dash-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: 14px;
+            }
+
+            .topbar-right {
+                gap: 8px;
+            }
+
+            .topbar-link {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media(max-width:480px) {
+            :root {
+                --topbar: 52px;
+            }
+
+            .sb-head {
+                padding: 12px;
+            }
+
+            .sb-logo {
+                width: 32px;
+                height: 32px;
+            }
+
+            .sb-school {
+                font-size: 0.75rem;
+            }
+
+            .sb-role {
+                font-size: 0.65rem;
+            }
+
+            .topbar h1 {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+    <link rel="icon" type="image/jpeg" href="./larbec piccs/image1.jpeg">>
+</head>
+
+<body>
+
+    <!-- LOADING -->
+    <div id="splash">
+        <div class="splash-ring"></div>
+        <div class="splash-name">Larbec International Academy</div>
+        <div class="splash-sub">Student Portal</div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toast-msg"></span></div>
+
+    <!-- ══════════════ LOGIN ══════════════ -->
+    <div id="login-page">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="login-logo">
+                    <img src="./larbec piccs/image1.jpeg" alt="Larbec Logo" />
+                </div>
+                <div class="login-school-info">
+                    <h3>Larbec International Academy</h3>
+                    <p>Student Portal</p>
+                </div>
+            </div>
+            <h2 style="text-align: center; margin-bottom: 8px;">Enter your Admission Code or Parent Email to
+                check the current status of your application</h2>
+            <p style="text-align: center;">Sign in to track your admission &amp; access your portal</p>
+
+            <div class="login-tabs">
+                <div class="ltab active" onclick="switchTab('code')">Admission Code</div>
+                <div class="ltab" onclick="switchTab('email')">Parent/Guardian Email</div>
+            </div>
+
+            <!-- Code login -->
+            <div id="tab-code">
+                <label class="fl">Admission Code</label>
+                <input class="fi" id="login-code" type="text" placeholder="e.g. Larbec-2025-1234" />
+                <button class="btn-login" onclick="doLoginByCode()"><i class="fas fa-sign-in-alt"
+                        style="margin-right:7px"></i>Sign In</button>
+            </div>
+
+            <!-- Email login -->
+            <div id="tab-email" style="display:none">
+                <label class="fl">Parent / Guardian Email Address</label>
+                <input class="fi" id="login-email" type="email" placeholder="parent@email.com" />
+                <button class="btn-login" onclick="doLoginByEmail()"><i class="fas fa-sign-in-alt"
+                        style="margin-right:7px"></i>Sign In</button>
+            </div>
+
+            <div class="login-err" id="login-err"><i class="fas fa-exclamation-circle"></i> <span id="login-err-msg">Not
+                    found</span></div>
+            <div style="margin-top:18px;text-align:center;font-size:.8rem;color:violet">
+                <a href="admission.html" style="color:var(--violet);text-decoration:none">Apply Now</a>
+                &nbsp;·&nbsp;
+                <a href="../index.html" style="color:white;text-decoration:none">← Website</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ PORTAL ══════════════ -->
+    <div id="portal">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sb-head">
+                <div class="sb-logo"><img src="./larbec piccs/image1.jpeg" alt="Larbec Logo" /></div>
+                <div>
+                    <div class="sb-school">Larbec Portal</div>
+                    <div class="sb-role">Student</div>
+                </div>
+            </div>
+            <nav class="sb-nav">
+                <div class="sb-section">Main</div>
+                <button class="sb-link active" onclick="goSection('s-dash',this)"><i class="fas fa-home"></i>
+                    Dashboard</button>
+                <button class="sb-link" onclick="goSection('s-application',this)"><i class="fas fa-file-alt"></i> My
+                    Application</button>
+                <button class="sb-link" onclick="goSection('s-status',this)"><i class="fas fa-chart-line"></i> Admission
+                    Status</button>
+                <div class="sb-section">Communication</div>
+                <button class="sb-link" id="msg-sb-link" onclick="goSection('s-messages',this)"><i
+                        class="fas fa-envelope"></i> Messages <span class="sb-badge" id="unread-count"
+                        style="display:none">0</span></button>
+                <div class="sb-section">Results</div>
+                <button class="sb-link" onclick="goSection('s-letter',this)"><i class="fas fa-scroll"></i> Admission
+                    Letter</button>
+                <div class="sb-section">Account</div>
+                <button class="sb-link" onclick="goSection('s-profile',this)"><i class="fas fa-user"></i> My
+                    Profile</button>
+            </nav>
+            <div class="sb-footer">
+                <div class="sb-user">
+                    <div class="sb-avatar" id="sp-avatar">??</div>
+                    <div>
+                        <div class="sb-uname" id="sp-name">Loading...</div>
+                        <div class="sb-uemail" id="sp-email">—</div>
+                    </div>
+                    <button class="sb-logout" onclick="doLogout()" title="Logout"><i
+                            class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+            <div class="topbar">
+                <button class="menu-toggle" id="menu-toggle" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 id="page-title">Dashboard</h1>
+                <div class="topbar-right">
+                    <a href="index.html" class="topbar-link" title="Back to Home"><i class="fas fa-home"></i></a>
+                    <button class="notif-btn" onclick="goSection('s-messages',null)">
+                        <i class="fas fa-bell"></i>
+                        <div class="notif-dot" id="notif-dot"></div>
+                    </button>
+                    <div class="sb-avatar" id="topbar-avatar" style="width:34px;height:34px;font-size:.74rem">??</div>
+                </div>
+            </div>
+            <div class="content">
+
+                <!-- DASHBOARD -->
+                <div class="section active" id="s-dash">
+                    <div class="dash-cards">
+                        <div class="dcard c-violet" data-scroll-animation="bottom" data-scroll-delay="0">
+                            <div class="dcard-val" id="dc-code" style="font-size:1rem;letter-spacing:1px">—</div>
+                            <div class="dcard-label">Admission Code</div>
+                        </div>
+                        <div class="dcard" data-scroll-animation="bottom" data-scroll-delay="80">
+                            <div class="dcard-val" id="dc-status">—</div>
+                            <div class="dcard-label">Status</div>
+                        </div>
+                        <div class="dcard c-warn" data-scroll-animation="bottom" data-scroll-delay="160">
+                            <div class="dcard-val" id="dc-msgs">0</div>
+                            <div class="dcard-label">Unread Messages</div>
+                        </div>
+                    </div>
+                    <div class="two-col">
+                        <div>
+                            <div class="wbox" data-scroll-animation="left" data-scroll-delay="240">
+                                <div class="wbox-title">Application Timeline</div>
+                                <div class="timeline" id="dash-timeline">
+                                    <div class="tl-item">
+                                        <div class="tl-dot dim"></div>
+                                        <div class="tl-box">
+                                            <div class="tl-date">—</div>
+                                            <div class="tl-title">Loading...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="wbox" data-scroll-animation="right" data-scroll-delay="240">
+                                <div class="wbox-title">Recent Messages</div>
+                                <div id="dash-msgs">
+                                    <div style="color:var(--muted);font-size:.83rem;text-align:center;padding:14px">
+                                        Loading messages...</div>
+                                </div>
+                                <button class="btn-o" style="width:100%;margin-top:10px;justify-content:center"
+                                    onclick="goSection('s-messages',null)">View All Messages</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MY APPLICATION -->
+                <div class="section" id="s-application">
+                    <div class="wbox">
+                        <div class="wbox-title">Application Details</div>
+                        <div id="app-details">
+                            <div style="color:var(--muted);text-align:center;padding:20px">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATUS -->
+                <div class="section" id="s-status">
+                    <div class="wbox" style="text-align:center;padding:40px">
+                        <div id="status-icon"
+                            style="width:78px;height:78px;border-radius:50%;background:rgba(230,81,0,.1);border:2px solid var(--warn);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:2rem;color:var(--warn)">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div id="status-badge-big" class="sbadge sbadge-pending"
+                            style="font-size:.9rem;padding:9px 22px;margin-bottom:14px">Under Review</div>
+                        <p id="status-msg"
+                            style="color:var(--muted);max-width:480px;margin:0 auto;font-size:.88rem;line-height:1.8">
+                            Your application is currently being reviewed. Expected response: 5–7 working days.</p>
+                    </div>
+                    <div class="wbox">
+                        <div class="wbox-title">Progress Tracker</div>
+                        <div class="timeline" id="status-timeline">
+                            <div class="tl-item">
+                                <div class="tl-dot dim"></div>
+                                <div class="tl-box">
+                                    <div class="tl-title">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MESSAGES -->
+                <div class="section" id="s-messages">
+                    <div class="wbox">
+                        <div class="wbox-title">Messages from School</div>
+                        <div id="messages-list">
+                            <div style="color:var(--muted);text-align:center;padding:20px;font-size:.84rem">Loading
+                                messages...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LETTER -->
+                <div class="section" id="s-letter">
+                    <div id="letter-pending" class="wbox" style="text-align:center;padding:50px">
+                        <div style="font-size:3rem;color:rgba(124,58,237,.18);margin-bottom:14px"><i
+                                class="fas fa-scroll"></i></div>
+                        <div class="wbox-title" style="margin-bottom:8px">No Letter Available Yet</div>
+                        <p style="color:var(--muted);font-size:.86rem;max-width:420px;margin:0 auto;line-height:1.8">
+                            Your official admission letter will appear here once the admissions committee has made a
+                            decision on your application.</p>
+                    </div>
+                    <div id="letter-accepted" style="display:none">
+                        <div class="letter-wrap" id="letter-printable">
+                            <div class="letter-banner">
+                                <img src="./larbec piccs/image1.jpeg" alt="Larbec International Academy Logo"
+                                    class="letter-logo" />
+                            </div>
+                            <div class="letter-hdr">
+                                <div>
+                                    <div class="letter-school-name">Larbec International Academy
+                                        <small>Atonsu-Fabi, Kumasi, Ghana &nbsp;·&nbsp; 0244417789 &nbsp;·&nbsp;
+                                            kofigyansah@gmail.com</small>
+                                    </div>
+                                </div>
+                                <div style="text-align:right">
+                                    <div style="font-size:.8rem;color:var(--muted)" id="letter-date">—</div>
+                                    <div style="font-size:.82rem;font-weight:700;color:var(--violet)" id="letter-code">—
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="letter-body">
+                                <p>Dear <strong id="letter-parent">Parent/Guardian</strong>,</p>
+                                <p>On behalf of the staff and management of <strong>Larbec International
+                                        Academy</strong>,
+                                    it is my distinct pleasure to inform you that your child, <strong
+                                        id="letter-student">Student Name</strong>, has been <strong
+                                        style="color:var(--success)">OFFERED ADMISSION</strong> to our school for the
+                                    <strong id="letter-year">2025/2026</strong> academic year.
+                                </p>
+                                <p>Your child has been placed in <strong id="letter-class">—</strong>. Please report to
+                                    the school's admissions office with all <em>original</em> documents within
+                                    <strong>two weeks</strong> of this letter to complete enrolment and pay the
+                                    acceptance fee.
+                                </p>
+                                <p><strong>Documents to present on arrival:</strong> Original Birth Certificate,
+                                    Passport Photo (×4), Parent/Guardian ID (original), Previous School Report Card, and
+                                    completed Medical Form (available at the school office).</p>
+                                <p>Kindly note that your child's placement is conditional upon verification of all
+                                    original documents submitted. Larbec International Academy reserves the right to
+                                    withdraw this offer if any information provided is found to be inaccurate or
+                                    falsified.</p>
+                                <p>We look forward to welcoming <strong id="letter-student2">your child</strong> into
+                                    the Larbec International family — where every mind is nurtured, every dream is
+                                    supported, and excellence is a way of life.</p>
+                            </div>
+                            <div class="letter-sig">
+                                <p style="font-size:.86rem">Yours faithfully,</p>
+                                <p
+                                    style="margin-top:14px;font-family:'Playfair Display',serif;font-size:1rem;color:var(--deep)">
+                                    Mr. Kofi Gyansah</p>
+                                <p style="font-size:.78rem;color:var(--muted)">Head of Admissions, Larbec International
+                                    Academy</p>
+                            </div>
+                            <button class="pdf-btn" onclick="downloadLetter('accepted')"><i class="fas fa-file-pdf"></i>
+                                Download Admission Letter (PDF)</button>
+                        </div>
+                    </div>
+                    <div id="letter-rejected" style="display:none">
+                        <div class="letter-wrap" id="rejection-printable">
+                            <div class="letter-banner">
+                                <img src="./larbec piccs/image1.jpeg" alt="Larbec International Academy Logo"
+                                    class="letter-logo" />
+                            </div>
+                            <div class="letter-hdr">
+                                <div>
+                                    <div class="letter-school-name">Larbec International Academy
+                                        <small>Atonsu-Fabi, Kumasi, Ghana &nbsp;·&nbsp; +233 26 643 4973 &nbsp;·&nbsp;
+                                            info@larbec.edu.gh</small>
+                                    </div>
+                                </div>
+                                <div style="text-align:right">
+                                    <div style="font-size:.8rem;color:var(--muted)" id="rej-date">—</div>
+                                    <div style="font-size:.82rem;font-weight:700;color:var(--violet)" id="rej-code">—
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="letter-body">
+                                <p>Dear <strong id="rej-parent">Parent/Guardian</strong>,</p>
+                                <p>Thank you for your interest in enrolling your child at <strong>Larbec International
+                                        School</strong> for the <span id="rej-year">2025/2026</span> academic year.</p>
+                                <p>After careful and thorough consideration by our admissions committee, we regret to
+                                    inform you that we are <strong style="color:var(--error)">unable to offer
+                                        admission</strong> to <strong id="rej-student">your child</strong> at this time.
+                                </p>
+                                <p id="rej-reason-para" style="display:none"><strong>Reason:</strong> <span
+                                        id="rej-reason-text">—</span></p>
+                                <p>We appreciate the time and effort you invested in this application, and we
+                                    acknowledge that this may be disappointing news. We encourage you to re-apply for
+                                    the next academic year — places are reviewed on a first-come, first-served basis,
+                                    and early applications receive priority.</p>
+                                <p>Should you have any questions or wish to discuss this decision, please do not
+                                    hesitate to contact the admissions office at kofigyansah@gmail.com or call
+                                    0244417789.</p>
+                                <p>We wish your child the very best in their educational journey.</p>
+                            </div>
+                            <div class="letter-sig">
+                                <p style="font-size:.86rem">Yours sincerely,</p>
+                                <p
+                                    style="margin-top:14px;font-family:'Playfair Display',serif;font-size:1rem;color:var(--deep)">
+                                    Mr. Kofi Gyansah</p>
+                                <p style="font-size:.78rem;color:var(--muted)">Head of Admissions, Larbec International
+                                    Academy</p>
+                            </div>
+                            <button class="pdf-btn" onclick="downloadLetter('rejected')"><i class="fas fa-file-pdf"></i>
+                                Download Rejection Letter (PDF)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROFILE -->
+                <div class="section" id="s-profile">
+                    <div class="wbox">
+                        <div class="wbox-title">My Profile</div>
+                        <div style="display:flex;align-items:center;gap:18px;margin-bottom:26px">
+                            <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--violet-light));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.7rem;color:var(--deep);font-weight:700"
+                                id="profile-avatar">??</div>
+                            <div>
+                                <div style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--deep)"
+                                    id="profile-name">Loading...</div>
+                                <div style="color:var(--muted);font-size:.84rem" id="profile-code">Admission Code: —
+                                </div>
+                            </div>
+                        </div>
+                        <div id="profile-details"></div>
+                    </div>
+                </div>
+
+            </div><!-- /content -->
+        </main>
+    </div><!-- /portal -->
+
+    <!-- ══════════════ LOGIC ══════════════ -->
+    <script>
+        // ── FIREBASE CONFIG ──────────────────────────────────────────────────────────
+        // Replace with your actual Firebase project credentials
+        const firebaseConfig = {
+            apiKey: "AIzaSyCaxywVJqxr9jnLk5d8rmxC5SUoS2hrzEs",
+            authDomain: "larbec-2b730.firebaseapp.com",
+            databaseURL: "https://larbec-2b730-default-rtdb.firebaseio.com",
+            projectId: "larbec-2b730",
+            storageBucket: "larbec-2b730.firebasestorage.app",
+            messagingSenderId: "33993356225",
+            appId: "1:33993356225:web:d4cabc2d2f7a0f6be17540",
+            measurementId: "G-YMXLDP19HK"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const storage = firebase.storage();
+
+        // ── STATE ─────────────────────────────────────────────────────────────────────
+        let currentApp = null;
+        let appCode = null;
+        let appRef = null;
+
+        // ── LOADING ───────────────────────────────────────────────────────────────────
+        window.addEventListener('load', () => {
+            const saved = sessionStorage.getItem('Larbec_code');
+            if (saved) {
+                loadPortal(saved);
+            } else {
+                document.getElementById('splash').classList.add('gone');
+                document.getElementById('login-page').style.display = 'flex';
+            }
+        });
+
+        // ── LOGIN ─────────────────────────────────────────────────────────────────────
+        function switchTab(tab) {
+            document.querySelectorAll('.ltab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'code') || (i === 1 && tab === 'email')));
+            document.getElementById('tab-code').style.display = tab === 'code' ? 'block' : 'none';
+            document.getElementById('tab-email').style.display = tab === 'email' ? 'block' : 'none';
+        }
+
+        async function doLoginByCode() {
+            const code = document.getElementById('login-code').value.trim().toUpperCase();
+            if (!code) { showLoginErr('Please enter your admission code.'); return; }
+            setLoginLoading(true);
+            try {
+                const snap = await db.ref('applications/' + code).once('value');
+                if (!snap.exists()) { showLoginErr('Admission code not found. Please check and try again.'); setLoginLoading(false); return; }
+                sessionStorage.setItem('Larbec_code', code);
+                loadPortal(code);
+            } catch (e) { showLoginErr('Error connecting. Check Firebase config.'); setLoginLoading(false); }
+        }
+
+        async function doLoginByEmail() {
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
+            if (!email) { showLoginErr('Please enter your parent/guardian email.'); return; }
+            setLoginLoading(true);
+            try {
+                // Search in all applications for matching parent/guardian emails
+                const snap = await db.ref('applications').once('value');
+                if (!snap.exists()) { showLoginErr('No applications found. Please try the admission code method.'); setLoginLoading(false); return; }
+
+                let foundCode = null;
+                snap.forEach(appSnap => {
+                    const app = appSnap.val();
+                    // Check if email matches father, mother, or guardian email
+                    if ((app.fatherEmail && app.fatherEmail.toLowerCase() === email) ||
+                        (app.motherEmail && app.motherEmail.toLowerCase() === email) ||
+                        (app.guardianEmail && app.guardianEmail.toLowerCase() === email)) {
+                        foundCode = appSnap.key;
+                    }
+                });
+
+                if (!foundCode) { showLoginErr('No application found for this email. Please check and try again.'); setLoginLoading(false); return; }
+                sessionStorage.setItem('Larbec_code', foundCode);
+                loadPortal(foundCode);
+            } catch (e) { showLoginErr('Error connecting. Check Firebase config.'); setLoginLoading(false); }
+        }
+
+        function setLoginLoading(on) {
+            document.querySelectorAll('.btn-login').forEach(b => b.textContent = on ? 'Signing in...' : 'Sign In');
+        }
+
+        function showLoginErr(msg) {
+            document.getElementById('login-err-msg').textContent = msg;
+            document.getElementById('login-err').style.display = 'block';
+        }
+
+        // ── LOAD PORTAL ───────────────────────────────────────────────────────────────
+        function loadPortal(code) {
+            appCode = code;
+            appRef = db.ref('applications/' + code);
+            // Real-time listener
+            appRef.on('value', snap => {
+                document.getElementById('splash').classList.add('gone');
+                if (!snap.exists()) { doLogout(); return; }
+                currentApp = { id: code, ...snap.val() };
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('portal').classList.add('show');
+                populatePortal();
+            });
+        }
+
+        function doLogout() {
+            sessionStorage.removeItem('Larbec_code');
+            if (appRef) appRef.off();
+            currentApp = null; appCode = null; appRef = null;
+            document.getElementById('portal').classList.remove('show');
+            document.getElementById('login-page').style.display = 'flex';
+            setLoginLoading(false);
+        }
+
+        // ── POPULATE ──────────────────────────────────────────────────────────────────
+        function populatePortal() {
+            const a = currentApp;
+            const name = `${a.studentFirstName || ''} ${a.studentLastName || ''}`.trim();
+            const initials = `${(a.studentFirstName || '?')[0]}${(a.studentLastName || '?')[0]}`.toUpperCase();
+            const code = a.id;
+
+            // Get parent/guardian email (priority: mother > father > guardian)
+            const parentEmail = a.motherEmail || a.fatherEmail || a.guardianEmail || '—';
+
+            // Sidebar / topbar
+            document.querySelectorAll('#sp-avatar,#topbar-avatar,#profile-avatar').forEach(el => el.textContent = initials);
+            document.getElementById('sp-name').textContent = name;
+            document.getElementById('sp-email').textContent = parentEmail;
+            document.getElementById('profile-name').textContent = name;
+            document.getElementById('profile-code').textContent = 'Admission Code: ' + code;
+
+            // Dash cards
+            document.getElementById('dc-code').textContent = code;
+            document.getElementById('dc-status').textContent = statusLabel(a.status);
+
+            // Messages
+            const msgs = a.messages ? Object.values(a.messages) : [];
+            const unread = msgs.filter(m => !m.read).length;
+            document.getElementById('dc-msgs').textContent = unread;
+            if (unread > 0) {
+                document.getElementById('unread-count').textContent = unread;
+                document.getElementById('unread-count').style.display = 'inline';
+                document.getElementById('notif-dot').classList.add('show');
+            }
+
+            renderTimeline(a);
+            renderMessages(a);
+            renderAppDetails(a);
+            renderProfile(a);
+            renderStatusSection(a);
+            renderLetter(a);
+        }
+
+        function statusLabel(s) {
+            const m = { pending: 'Under Review', accepted: 'Accepted', rejected: 'Rejected', docs: 'Docs Required' };
+            return m[s] || 'Pending';
+        }
+
+        // ── TIMELINE ──────────────────────────────────────────────────────────────────
+        function renderTimeline(a) {
+            const submitted = a.submittedAt ? (() => { try { return new Date(a.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); } catch (e) { return '—'; } })() : '—';
+            const updated = a.updatedAt ? (() => { try { return new Date(a.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); } catch (e) { return null; } })() : null;
+            const steps = [
+                { done: true, date: submitted, title: 'Application Submitted', desc: 'Successfully received by the admissions office.' },
+                { done: !!a.updatedAt || a.status !== 'pending', active: a.status === 'pending', date: updated || 'In Progress', title: 'Under Review', desc: 'Admissions committee is reviewing the application.' },
+                { done: a.status === 'accepted' || a.status === 'rejected', active: a.status === 'docs', date: updated || 'Pending', title: a.status === 'docs' ? 'Documents Requested' : 'Decision Pending', desc: a.status === 'docs' ? 'Additional documents have been requested.' : 'Final admission decision will be communicated here.' },
+                { done: a.status === 'accepted' || a.status === 'rejected', date: updated || '—', title: a.status === 'accepted' ? 'Admission Granted' : a.status === 'rejected' ? 'Application Declined' : 'Awaiting Decision', desc: a.status === 'accepted' ? 'Congratulations! Your child has been offered admission.' : a.status === 'rejected' ? 'See your portal for the official letter.' : 'A decision will be communicated in 5–7 working days.' }
+            ];
+            const html = steps.map(s => `
+    <div class="tl-item">
+      <div class="tl-dot ${s.done ? 'done' : s.active ? 'active' : 'dim'}">
+        <i class="fas ${s.done ? 'fa-check' : s.active ? 'fa-spinner' : 'fa-circle'}"></i>
+      </div>
+      <div class="tl-box">
+        <div class="tl-date">${s.date || '—'}</div>
+        <div class="tl-title">${s.title}</div>
+        <div class="tl-desc">${s.desc}</div>
+      </div>
+    </div>`).join('');
+            // Populate both dashboard and status page timelines
+            if (document.getElementById('dash-timeline')) {
+                document.getElementById('dash-timeline').innerHTML = html;
+            }
+            if (document.getElementById('status-timeline')) {
+                document.getElementById('status-timeline').innerHTML = html;
+            }
+        }
+
+        // ── MESSAGES ─────────────────────────────────────────────────────────────────
+        function renderMessages(a) {
+            const msgs = a.messages ? Object.entries(a.messages).map(([k, v]) => ({ ...v, key: k })).sort((x, y) => (y.sentAt || 0) - (x.sentAt || 0)) : [];
+            const html = msgs.length
+                ? msgs.map((m, i) => `
+        <div class="msg-item ${m.read ? '' : 'unread'}" onclick="openMsg(this,'${m.key}')">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="msg-from"><i class="fas fa-school" style="color:var(--violet);margin-right:7px"></i>${m.from || 'Larbec Admin'} — ${m.subject || 'Message'}</div>
+            <div class="msg-time">${m.sentAt ? (() => { try { return new Date(m.sentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch (e) { return ''; } })() : ''}</div>
+          </div>
+          <div class="msg-preview">${(m.body || '').substring(0, 80)}...</div>
+          <div class="msg-body">${(m.body || '').replace(/\n/g, '<br>')}</div>
+        </div>`).join('')
+                : '<div style="color:var(--muted);text-align:center;padding:18px;font-size:.83rem">No messages yet.</div>';
+            document.getElementById('messages-list').innerHTML = html;
+            // Dashboard - latest 2
+            document.getElementById('dash-msgs').innerHTML = msgs.slice(0, 2).map(m => `
+    <div class="msg-item ${m.read ? '' : 'unread'}" onclick="goSection('s-messages',null)">
+      <div style="display:flex;justify-content:space-between">
+        <div class="msg-from" style="font-size:.8rem"><i class="fas fa-school" style="color:var(--violet);margin-right:6px"></i>${m.subject || 'Message'}</div>
+        <div class="msg-time">${m.sentAt ? (() => { try { return new Date(m.sentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch (e) { return ''; } })() : ''}</div>
+      </div>
+      <div class="msg-preview">${(m.body || '').substring(0, 70)}...</div>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:14px">No messages.</div>';
+        }
+
+        async function openMsg(el, msgKey) {
+            el.classList.toggle('open');
+            el.classList.remove('unread');
+            // Mark as read in Firebase
+            if (appCode && msgKey) {
+                await db.ref('applications/' + appCode + '/messages/' + msgKey + '/read').set(true);
+            }
+        }
+
+
+
+        // ── APP DETAILS ────────────────────────────────────────────────────────────────
+        function renderAppDetails(a) {
+            // Get parent/guardian information
+            const parentEmail = a.motherEmail || a.fatherEmail || a.guardianEmail || '—';
+            const parentName = a.motherName || a.fatherName || `${a.guardianFirstName || ''} ${a.guardianLastName || ''}`.trim() || '—';
+            const parentPhone = a.motherPhone || a.fatherPhone || a.guardianPhone || '—';
+
+            const rows = [
+                ['Full Name', `${a.studentFirstName || ''} ${a.studentLastName || ''}`.trim()],
+                ['Admission Code', a.id],
+                ['Date of Birth', a.dateOfBirth || '—'],
+                ['Gender', a.gender || '—'],
+                ['Nationality', a.nationality || '—'],
+                ['Class Applied', a.classApplied || '—'],
+                ['Academic Year', a.academicYear || '—'],
+                ['Learning Mode', a.learningMode || '—'],
+                ['Previous School', a.previousSchool || 'None'],
+                ['Parent/Guardian', parentName],
+                ['Parent Phone', parentPhone],
+                ['Parent Email', parentEmail],
+                ['Application Date', a.submittedAt ? (() => { try { return new Date(a.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }); } catch (e) { return '—'; } })() : '—'],
+                ['Status', statusLabel(a.status)],
+            ];
+            document.getElementById('app-details').innerHTML = rows.map(([l, v]) =>
+                `<div class="detail-row"><div class="detail-label">${l}</div><div class="detail-val">${v}</div></div>`).join('');
+        }
+
+        // ── STATUS SECTION ────────────────────────────────────────────────────────────
+        function renderStatusSection(a) {
+            const icons = { pending: ['fas fa-clock', 'var(--warn)', 'sbadge-pending'], accepted: ['fas fa-check-circle', 'var(--success)', 'sbadge-accepted'], rejected: ['fas fa-times-circle', 'var(--error)', 'sbadge-rejected'], docs: ['fas fa-folder-open', 'var(--violet)', 'sbadge-docs'] };
+            const [icon, color, badgeClass] = icons[a.status] || icons.pending;
+            const statusIconEl = document.getElementById('status-icon');
+            statusIconEl.innerHTML = `<i class="${icon}"></i>`;
+            statusIconEl.style.background = color.replace('var', 'rgba').replace(')', ', .1)');
+            statusIconEl.style.border = `2px solid ${color}`;
+            statusIconEl.style.color = color;
+            const bb = document.getElementById('status-badge-big');
+            bb.className = 'sbadge ' + badgeClass;
+            bb.textContent = statusLabel(a.status);
+            const msgs = { pending: 'Your application is being reviewed. Expected response: 5–7 working days.', accepted: 'Congratulations! Your child has been offered admission. Please download your letter.', rejected: 'We were unable to offer admission at this time. Please download your letter for full details.', docs: 'Additional information has been requested. Please check your messages for details.' };
+            document.getElementById('status-msg').textContent = msgs[a.status] || msgs.pending;
+            // Progress timeline in status section
+            renderTimeline(a); // reuse same function, set into status-timeline too
+        }
+
+        // ── PROFILE ───────────────────────────────────────────────────────────────────
+        function renderProfile(a) {
+            // Get parent/guardian information
+            const parentEmail = a.motherEmail || a.fatherEmail || a.guardianEmail || '—';
+            const parentName = a.motherName || a.fatherName || `${a.guardianFirstName || ''} ${a.guardianLastName || ''}`.trim() || '—';
+            const parentPhone = a.motherPhone || a.fatherPhone || a.guardianPhone || '—';
+            const parentOccupation = a.motherOccupation || a.fatherOccupation || '—';
+
+            const rows = [
+                ['Student Name', `${a.studentFirstName || ''} ${a.studentLastName || ''}`.trim()],
+                ['Admission Code', a.id],
+                ['Date of Birth', a.dateOfBirth || '—'],
+                ['Gender', a.gender || '—'],
+                ['Home Address', a.homeAddress || '—'],
+                ['Parent Name', parentName],
+                ['Parent Email', parentEmail],
+                ['Parent Phone', parentPhone],
+                ['Occupation', parentOccupation],
+                ['Class Applied', a.classApplied || '—'],
+                ['Academic Year', a.academicYear || '—'],
+                ['Learning Mode', a.learningMode || '—'],
+            ];
+            document.getElementById('profile-details').innerHTML = rows.map(([l, v]) =>
+                `<div class="detail-row"><div class="detail-label">${l}</div><div class="detail-val">${v}</div></div>`).join('');
+        }
+
+        // ── LETTER ────────────────────────────────────────────────────────────────────
+        function renderLetter(a) {
+            const name = `${a.studentFirstName || ''} ${a.studentLastName || ''}`.trim();
+            const today = a.updatedAt ? (() => { try { return new Date(a.updatedAt).toLocaleDateString('en-GB', { day: 'long', month: 'long', year: 'numeric' }); } catch (e) { return (() => { try { return new Date().toLocaleDateString('en-GB', { day: 'long', month: 'long', year: 'numeric' }); } catch (e2) { return '—'; } })(); } })() : (() => { try { return new Date().toLocaleDateString('en-GB', { day: 'long', month: 'long', year: 'numeric' }); } catch (e) { return '—'; } })();
+            document.getElementById('letter-pending').style.display = (a.status === 'pending' || a.status === 'docs') ? 'block' : 'none';
+            document.getElementById('letter-accepted').style.display = a.status === 'accepted' ? 'block' : 'none';
+            document.getElementById('letter-rejected').style.display = a.status === 'rejected' ? 'block' : 'none';
+
+            if (a.status === 'accepted') {
+                document.getElementById('letter-date').textContent = today;
+                document.getElementById('letter-code').textContent = a.id;
+                document.getElementById('letter-parent').textContent = a.parentName || 'Parent/Guardian';
+                document.getElementById('letter-student').textContent = name;
+                document.getElementById('letter-student2').textContent = a.studentFirstName || name;
+                document.getElementById('letter-year').textContent = a.academicYear || '2025/2026';
+                document.getElementById('letter-class').textContent = a.classApplied || '—';
+            }
+            if (a.status === 'rejected') {
+                document.getElementById('rej-date').textContent = today;
+                document.getElementById('rej-code').textContent = a.id;
+                document.getElementById('rej-parent').textContent = a.parentName || 'Parent/Guardian';
+                document.getElementById('rej-student').textContent = name;
+                document.getElementById('rej-year').textContent = a.academicYear || '2025/2026';
+                if (a.statusNote) {
+                    document.getElementById('rej-reason-text').textContent = a.statusNote;
+                    document.getElementById('rej-reason-para').style.display = 'block';
+                }
+            }
+        }
+
+        // ── HELPER: Load image to data URL ──
+        async function getImageDataURL(imagePath) {
+            try {
+                const response = await fetch(encodeURI(imagePath));
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (err) {
+                console.warn('Could not load logo image:', imagePath, err);
+                return null;
+            }
+        }
+
+        // ── PDF DOWNLOAD ──────────────────────────────────────────────────────────────
+        async function downloadLetter(type) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const a = currentApp;
+            const name = `${a.studentFirstName || ''} ${a.studentLastName || ''}`.trim();
+            const today = (() => { try { return new Date().toLocaleDateString('en-GB', { day: 'long', month: 'long', year: 'numeric' }); } catch (e) { return '—'; } })();
+            const W = 210, margin = 20;
+
+            // ── LOAD AND ADD LOGO ──
+            let logoDataURL = await getImageDataURL('./larbec piccs/image1.jpeg');
+            if (!logoDataURL) {
+                logoDataURL = await getImageDataURL('./larbec piccs/image1-removebg-preview (1).png');
+            }
+            let yPos = 8;
+            if (logoDataURL) {
+                try {
+                    const logoFormat = logoDataURL.startsWith('data:image/png') ? 'PNG' :
+                        logoDataURL.startsWith('data:image/jpeg') ? 'JPEG' : 'JPEG';
+                    doc.addImage(logoDataURL, logoFormat, margin, 12, 24, 24);
+                    yPos = 40;
+                } catch (e) {
+                    console.warn('Could not add logo to PDF:', e);
+                    yPos = 8;
+                }
+            }
+
+            // ── HEADER ACCENT BAR ──
+            doc.setFillColor(124, 58, 237);
+            doc.rect(0, 0, W, 8, 'F');
+
+            // ── SCHOOL NAME ──
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor(10, 22, 40);
+            doc.text('Larbec International Academy', margin + 35, 22);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(120, 120, 120);
+            doc.text('Atonsu-Fabi, Kumasi, Ghana  |  0244417789  |  kofigyansah@gmail.com', margin + 35, 28);
+
+            // ── DIVIDER ──
+            doc.setDrawColor(201, 168, 76);
+            doc.setLineWidth(0.8);
+            doc.line(margin, yPos - 5, W - margin, yPos - 5);
+
+            // ── DATE & CODE ──
+            doc.setFontSize(9);
+            doc.setTextColor(120, 120, 120);
+            doc.text(today, margin, yPos + 3);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(201, 168, 76);
+            doc.text('Ref: ' + a.id, W - margin, yPos + 3, { align: 'right' });
+
+            // ── PASSPORT PHOTO PLACEHOLDER ──
+            doc.setFillColor(240, 236, 230);
+            doc.rect(W - margin - 30, yPos + 8, 30, 36, 'F');
+            doc.setDrawColor(201, 168, 76);
+            doc.rect(W - margin - 30, yPos + 8, 30, 36);
+            doc.setFontSize(7);
+            doc.setTextColor(150, 150, 150);
+            doc.setFont('helvetica', 'normal');
+            doc.text('PASSPORT', W - margin - 15, yPos + 24, { align: 'center' });
+            doc.text('PHOTO', W - margin - 15, yPos + 29, { align: 'center' });
+
+            // Attempt to load actual passport photo
+            if (a.documents?.passportPhoto?.url) {
+                try {
+                    const imgData = await toDataURL(a.documents.passportPhoto.url);
+                    doc.addImage(imgData, 'JPEG', W - margin - 30, yPos + 8, 30, 36);
+                } catch (e) { /* use placeholder */ }
+            }
+
+            // ── BODY ──
+            doc.setFontSize(10);
+            doc.setTextColor(30, 30, 30);
+            doc.setFont('helvetica', 'normal');
+            let y = yPos + 15;
+
+            if (type === 'accepted') {
+                doc.setFont('helvetica', 'bold');
+                doc.text('ADMISSION OFFER LETTER', margin, y); y += 8;
+                doc.setFont('helvetica', 'normal');
+                doc.text('Dear ' + (a.parentName || 'Parent/Guardian') + ',', margin, y); y += 7;
+                const lines1 = doc.splitTextToSize(`On behalf of the staff and management of Larbec International Academy, it is my distinct pleasure to inform you that your child, ${name}, has been OFFERED ADMISSION to our school for the ${a.academicYear || '2025/2026'} academic year.`, W - margin * 2 - 35);
+                doc.text(lines1, margin, y); y += lines1.length * 5 + 4;
+                doc.setFont('helvetica', 'bold');
+                doc.text(`Class Placement: ${a.classApplied || '—'}`, margin, y); y += 7;
+                doc.setFont('helvetica', 'normal');
+                const lines2 = doc.splitTextToSize(`Please report to the school's admissions office with all original documents within two weeks of this letter to complete enrolment and pay the acceptance fee.`, W - margin * 2 - 35);
+                doc.text(lines2, margin, y); y += lines2.length * 5 + 4;
+                const lines3 = doc.splitTextToSize('Documents to present: Original Birth Certificate, Passport Photo (×4), Parent/Guardian ID, Previous School Report Card, and completed Medical Form (available at school).', W - margin * 2);
+                doc.text(lines3, margin, y); y += lines3.length * 5 + 4;
+                const lines4 = doc.splitTextToSize(`We look forward to welcoming ${a.studentFirstName || 'your child'} into the Larbec International family.`, W - margin * 2);
+                doc.text(lines4, margin, y); y += lines4.length * 5 + 6;
+            } else {
+                doc.setFont('helvetica', 'bold');
+                doc.text('ADMISSION OUTCOME LETTER', margin, y); y += 8;
+                doc.setFont('helvetica', 'normal');
+                doc.text('Dear ' + (a.parentName || 'Parent/Guardian') + ',', margin, y); y += 7;
+                const l1 = doc.splitTextToSize(`Thank you for your interest in enrolling your child at Larbec International Academy for the ${a.academicYear || '2025/2026'} academic year.`, W - margin * 2 - 35);
+                doc.text(l1, margin, y); y += l1.length * 5 + 4;
+                const l2 = doc.splitTextToSize(`After careful and thorough consideration by our admissions committee, we regret to inform you that we are unable to offer ${name} admission at this time.`, W - margin * 2);
+                doc.text(l2, margin, y); y += l2.length * 5 + 4;
+                if (a.statusNote) {
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Reason: ', margin, y);
+                    doc.setFont('helvetica', 'normal');
+                    const lr = doc.splitTextToSize(a.statusNote, W - margin * 2 - 25);
+                    doc.text(lr, margin + 20, y); y += lr.length * 5 + 4;
+                }
+                const l3 = doc.splitTextToSize('We encourage you to re-apply for the next academic year. For questions, contact kofigyansah@gmail.com or call 0244417789.', W - margin * 2);
+                doc.text(l3, margin, y); y += l3.length * 5 + 6;
+            }
+
+            // ── SIGNATURE ──
+            y = Math.max(y, 210);
+            doc.setDrawColor(230, 225, 215);
+            doc.line(margin, y, margin + 60, y); y += 5;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+            doc.text('Mr. Kofi Gyansah', margin, y); y += 5;
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120, 120, 120);
+            doc.text('Headmaster, Larbec International Academy', margin, y);
+
+            // ── FOOTER BAR ──
+            doc.setFillColor(124, 58, 237);
+            doc.rect(0, 287, W, 10, 'F');
+            doc.setFontSize(7); doc.setTextColor(10, 22, 40); doc.setFont('helvetica', 'bold');
+            doc.text('A Modern, Quality Education is Life\'s Richest Legacy', W / 2, 293, { align: 'center' });
+
+            const filename = type === 'accepted' ? `Admission_Letter_${a.id}.pdf` : `Rejection_Letter_${a.id}.pdf`;
+            doc.save(filename);
+            showToast('PDF downloaded: ' + filename, 'success');
+        }
+
+        async function toDataURL(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width; canvas.height = img.height;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/jpeg'));
+                };
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
+        // ── MOBILE MENU TOGGLE ────────────────────────────────────────────────────────
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // Close menu when clicking on a nav item
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.sb-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('sidebar').classList.remove('active');
+                    }
+                });
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                const sidebar = document.getElementById('sidebar');
+                const toggle = document.getElementById('menu-toggle');
+                if (window.innerWidth <= 768 &&
+                    !sidebar.contains(e.target) &&
+                    !toggle.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            });
+        });
+
+        // ── NAVIGATION ────────────────────────────────────────────────────────────────
+        const titles = {
+            's-dash': 'Dashboard', 's-application': 'My Application', 's-status': 'Admission Status',
+            's-messages': 'Messages', 's-letter': 'Admission Letter', 's-profile': 'My Profile'
+        };
+        function goSection(id, btnEl) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.sb-link').forEach(b => b.classList.remove('active'));
+            document.getElementById(id)?.classList.add('active');
+            if (btnEl) btnEl.classList.add('active');
+            else document.querySelectorAll('.sb-link').forEach(b => { if (b.getAttribute('onclick')?.includes(id)) b.classList.add('active'); });
+            document.getElementById('page-title').textContent = titles[id] || '';
+            if (id === 's-messages') {
+                document.getElementById('unread-count').style.display = 'none';
+                document.getElementById('notif-dot').classList.remove('show');
+            }
+        }
+
+        // ── TOAST ─────────────────────────────────────────────────────────────────────
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.className = 'toast ' + type;
+            t.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+            document.getElementById('toast-msg').textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+    </script>
+    <script src="scroll-reveal.js"></script>
+</body>
+
+</html>

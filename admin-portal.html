@@ -1,0 +1,2507 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Admin Portal – Larbec International Academy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet" />
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* ── VARIABLES ── */
+        :root {
+            --gold: #7C3AED;
+            --gold-light: #A78BFA;
+            --deep: #0A1628;
+            --navy: #12284C;
+            --navy-mid: #1A3A6B;
+            --white: #fff;
+            --off: #F7F5F0;
+            --text: #1C1C1C;
+            --muted: #7A7A7A;
+            --border: #E2D9C5;
+            --success: #2E7D32;
+            --error: #C62828;
+            --warn: #E65100;
+            --sb: 240px;
+            --topbar: 62px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, var(--off) 0%, #FEFCF8 100%);
+            color: var(--text);
+            overflow-x: hidden
+        }
+
+        /* ── LOADING ── */
+        #splash {
+            position: fixed;
+            inset: 0;
+            background: var(--deep);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity .6s, visibility .6s
+        }
+
+        #splash.gone {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none
+        }
+
+        .splash-ring {
+            width: 64px;
+            height: 64px;
+            border: 3px solid rgba(201, 168, 76, .2);
+            border-top-color: var(--violet);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 18px
+        }
+
+        .splash-name {
+            font-family: 'Playfair Display', serif;
+            color: var(--white);
+            font-size: 1.6rem;
+            letter-spacing: 2px
+        }
+
+        .splash-sub {
+            color: var(--violet);
+            font-size: .7rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 6px
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        /* ── LOGIN ── */
+        #login-page {
+            min-height: 100vh;
+            background-image: linear-gradient(135deg, rgba(10, 22, 40, 0.75) 0%, rgba(13, 31, 60, 0.75) 100%), url('./larbec piccs/HERO3.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px
+        }
+
+        .login-box {
+            background: rgba(255, 255, 255, .06);
+            backdrop-filter: blur(30px);
+            border: 1.5px solid rgba(124, 58, 237, 0.3);
+            border-radius: 28px;
+            padding: 50px;
+            width: 100%;
+            max-width: 440px;
+            animation: fadeUp .5s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #7C3AED, #A78BFA, #7C3AED);
+        }
+
+        .login-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+        }
+
+        .login-logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+        }
+
+        .login-logo img {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
+        .login-school-info h3 {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .login-school-info p {
+            color: rgba(124, 58, 237, 0.9);
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .login-crest {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(167, 139, 250, 0.1));
+            border: 2px solid rgba(124, 58, 237, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            color: #A78BFA;
+            font-size: 1.8rem
+        }
+
+        .login-box h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--white);
+            font-size: 1.6rem;
+            text-align: center;
+            margin-bottom: 6px
+        }
+
+        .login-box p {
+            color: rgba(255, 255, 255, .45);
+            font-size: .83rem;
+            text-align: center;
+            margin-bottom: 30px
+        }
+
+        .fl {
+            display: block;
+            font-size: .74rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, .65);
+            margin-bottom: 6px;
+            letter-spacing: .5px;
+            text-transform: uppercase
+        }
+
+        .fi {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1.5px solid rgba(124, 58, 237, 0.25);
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            color: #fff;
+            background: rgba(124, 58, 237, 0.06);
+            outline: none;
+            transition: all 0.25s ease;
+            margin-bottom: 16px;
+        }
+
+        .fi:focus {
+            border-color: #7C3AED;
+            background: rgba(124, 58, 237, 0.12);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .fi::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .fi-light {
+            background: var(--off);
+            color: var(--text);
+            border-color: var(--border);
+            margin-bottom: 0
+        }
+
+        .fi-light:focus {
+            border-color: var(--violet);
+            background: var(--white)
+        }
+
+        .fi-light::placeholder {
+            color: var(--muted)
+        }
+
+        select.fi-light option {
+            color: var(--text);
+            background: var(--white)
+        }
+
+        textarea.fi-light {
+            resize: vertical;
+            min-height: 110px
+        }
+
+        .btn-login {
+            width: 100%;
+            background: var(--deep);
+            color: var(--white);
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: .95rem;
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: .4px;
+            margin-top: 4px
+        }
+
+        .btn-login:hover {
+            background: var(--violet-light);
+            transform: translateY(-1px)
+        }
+
+        .login-err {
+            color: #ff6b6b;
+            font-size: .8rem;
+            text-align: center;
+            margin-top: 10px;
+            display: none
+        }
+
+        .login-hint {
+            background: rgba(201, 168, 76, .07);
+            border: 1px solid rgba(201, 168, 76, .18);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: .78rem;
+            color: rgba(255, 255, 255, .5);
+            margin-bottom: 20px;
+            line-height: 1.6
+        }
+
+        /* ── PORTAL LAYOUT ── */
+        #portal {
+            display: none;
+            flex-direction: row;
+            min-height: 100vh
+        }
+
+        #portal.show {
+            display: flex
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: var(--sb);
+            background: var(--deep);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 300;
+            border-right: 1px solid rgba(201, 168, 76, .1);
+            transition: transform .3s
+        }
+
+        .sb-head {
+            padding: 20px 16px;
+            border-bottom: 1px solid rgba(201, 168, 76, .1);
+            display: flex;
+            align-items: center;
+            gap: 11px
+        }
+
+        .sb-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            background: rgba(201, 168, 76, .1);
+            border: 1px solid rgba(201, 168, 76, .25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--violet);
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .sb-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .sb-school {
+            font-family: 'Playfair Display', serif;
+            color: var(--white);
+            font-size: .88rem;
+            line-height: 1.2
+        }
+
+        .sb-role {
+            color: var(--violet);
+            font-size: .62rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 2px
+        }
+
+        .sb-nav {
+            padding: 16px 10px;
+            flex: 1
+        }
+
+        .sb-section {
+            font-size: .6rem;
+            color: rgba(255, 255, 255, .25);
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            padding: 12px 10px 5px
+        }
+
+        .sb-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: white;
+            font-size: .83rem;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none;
+            margin-bottom: 2px;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left
+        }
+
+        .sb-link:hover {
+            background: rgba(255, 255, 255, .05);
+            color: rgba(255, 255, 255, .9)
+        }
+
+        .sb-link.active {
+            background: rgba(201, 168, 76, .12);
+            color: var(--white);
+            font-weight: 600
+        }
+
+        .sb-link i {
+            width: 16px;
+            text-align: center;
+            font-size: .86rem
+        }
+
+        .sb-badge {
+            margin-left: auto;
+            background: var(--violet);
+            color: var(--deep);
+            font-size: .62rem;
+            font-weight: 700;
+            border-radius: 9px;
+            padding: 2px 7px
+        }
+
+        .sb-footer {
+            padding: 14px;
+            border-top: 1px solid rgba(201, 168, 76, .1)
+        }
+
+        .sb-user {
+            display: flex;
+            align-items: center;
+            gap: 9px
+        }
+
+        .sb-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--violet), var(--violet-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--deep);
+            font-size: .78rem;
+            flex-shrink: 0
+        }
+
+        .sb-uname {
+            color: var(--white);
+            font-size: .8rem;
+            font-weight: 600
+        }
+
+        .sb-uemail {
+            color: rgba(255, 255, 255, .35);
+            font-size: .67rem
+        }
+
+        .sb-logout {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, .35);
+            cursor: pointer;
+            transition: color .2s;
+            font-size: .88rem
+        }
+
+        .sb-logout:hover {
+            color: var(--error)
+        }
+
+        /* ── MAIN ── */
+        .main {
+            margin-left: var(--sb);
+            flex: 1;
+            min-height: 100vh
+        }
+
+        .topbar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            height: var(--topbar);
+            padding: 0 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 200
+        }
+
+        .topbar h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            color: var(--deep)
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .tb-badge {
+            font-size: .74rem;
+            color: var(--muted);
+            background: var(--off);
+            padding: 5px 13px;
+            border-radius: 20px;
+            border: 1px solid var(--border)
+        }
+
+        .topbar-link {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--muted);
+            text-decoration: none;
+            background: var(--white);
+            transition: all .2s;
+            font-size: .9rem
+        }
+
+        .topbar-link:hover {
+            border-color: var(--violet);
+            color: var(--violet);
+            background: rgba(201, 168, 76, .05)
+        }
+
+        .content {
+            padding: 26px
+        }
+
+        .section {
+            display: none
+        }
+
+        .section.active {
+            display: block
+        }
+
+        /* ── STAT CARDS ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            margin-bottom: 24px
+        }
+
+        .stat-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 16px
+        }
+
+        .stat-val {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.85rem;
+            color: var(--deep);
+            line-height: 1
+        }
+
+        .stat-label {
+            font-size: .72rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px
+        }
+
+        .stat-card.c-violet .stat-val {
+            color: var(--violet)
+        }
+
+        .stat-card.c-green .stat-val {
+            color: var(--success)
+        }
+
+        .stat-card.c-red .stat-val {
+            color: var(--error)
+        }
+
+        .stat-card.c-warn .stat-val {
+            color: var(--warn)
+        }
+
+        /* ── TABLE CARD ── */
+        .tbl-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 22px
+        }
+
+        .tbl-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .tbl-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.05rem;
+            color: var(--deep)
+        }
+
+        .tbl-actions {
+            display: flex;
+            align-items: center;
+            gap: 9px
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: var(--off);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 7px 12px
+        }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            font-size: .82rem;
+            outline: none;
+            width: 180px;
+            font-family: 'DM Sans', sans-serif;
+            color: var(--text)
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        thead {
+            background: var(--off)
+        }
+
+        th {
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            padding: 10px 16px;
+            text-align: left;
+            font-weight: 600
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: .83rem;
+            color: var(--text);
+            vertical-align: middle
+        }
+
+        tr:last-child td {
+            border-bottom: none
+        }
+
+        tr:hover td {
+            background: rgba(201, 168, 76, .02)
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap
+        }
+
+        .abtn {
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: .74rem;
+            font-weight: 600;
+            transition: all .2s;
+            white-space: nowrap
+        }
+
+        .abtn-green {
+            background: rgba(46, 125, 50, .1);
+            color: var(--success)
+        }
+
+        .abtn-green:hover {
+            background: var(--success);
+            color: #fff
+        }
+
+        .abtn-red {
+            background: rgba(198, 40, 40, .1);
+            color: var(--error)
+        }
+
+        .abtn-red:hover {
+            background: var(--error);
+            color: #fff
+        }
+
+        .abtn-violet {
+            background: rgba(201, 168, 76, .12);
+            color: #9a7a28
+        }
+
+        .abtn-violet:hover {
+            background: var(--violet);
+            color: var(--deep)
+        }
+
+        .abtn-blue {
+            background: rgba(26, 58, 107, .1);
+            color: var(--navy-mid)
+        }
+
+        .abtn-blue:hover {
+            background: var(--navy-mid);
+            color: #fff
+        }
+
+        .abtn-purple {
+            background: rgba(90, 90, 200, .1);
+            color: #5a5ac8
+        }
+
+        .abtn-purple:hover {
+            background: #5a5ac8;
+            color: #fff
+        }
+
+        /* ── STATUS BADGE ── */
+        .sbadge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 11px;
+            border-radius: 20px;
+            font-size: .74rem;
+            font-weight: 600
+        }
+
+        .sbadge-pending {
+            background: rgba(230, 81, 0, .1);
+            color: var(--warn)
+        }
+
+        .sbadge-accepted {
+            background: rgba(46, 125, 50, .1);
+            color: var(--success)
+        }
+
+        .sbadge-rejected {
+            background: rgba(198, 40, 40, .1);
+            color: var(--error)
+        }
+
+        .sbadge-docs {
+            background: rgba(201, 168, 76, .1);
+            color: var(--violet)
+        }
+
+        /* ── WHITE BOX ── */
+        .wbox {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 20px
+        }
+
+        .wbox-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: var(--deep);
+            margin-bottom: 16px
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px
+        }
+
+        .three-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px
+        }
+
+        /* ── COMPOSE ── */
+        .compose-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 10px
+        }
+
+        .compose-header label {
+            font-size: .75rem;
+            color: var(--muted);
+            width: 46px;
+            text-transform: uppercase;
+            letter-spacing: .5px
+        }
+
+        .compose-header input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-family: 'DM Sans', sans-serif;
+            font-size: .9rem;
+            color: var(--text);
+            background: transparent
+        }
+
+        .template-btns {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+            margin-bottom: 12px
+        }
+
+        .tpl-btn {
+            background: var(--off);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: .74rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .tpl-btn:hover {
+            border-color: var(--violet);
+            color: var(--violet)
+        }
+
+        /* ── DOCUMENT CARD ── */
+        .doc-item {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 13px;
+            background: var(--off);
+            border-radius: 10px;
+            margin-bottom: 9px;
+            border: 1px solid var(--border)
+        }
+
+        .doc-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0
+        }
+
+        .doc-icon.pdf {
+            background: rgba(198, 40, 40, .1);
+            color: var(--error)
+        }
+
+        .doc-icon.img {
+            background: rgba(201, 168, 76, .1);
+            color: var(--violet)
+        }
+
+        .doc-icon.id {
+            background: rgba(26, 58, 107, .1);
+            color: var(--navy-mid)
+        }
+
+        .doc-name {
+            font-weight: 600;
+            font-size: .84rem;
+            color: var(--deep)
+        }
+
+        .doc-meta {
+            font-size: .74rem;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        .doc-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 6px
+        }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            backdrop-filter: blur(4px);
+            z-index: 5000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px
+        }
+
+        .modal-overlay.open {
+            display: flex
+        }
+
+        .modal {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 36px;
+            max-width: 560px;
+            width: 100%;
+            position: relative;
+            max-height: 88vh;
+            overflow-y: auto;
+            animation: fadeUp .25s ease
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 13px;
+            right: 13px;
+            width: 30px;
+            height: 30px;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+            background: var(--off);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--muted);
+            transition: all .2s
+        }
+
+        .modal-close:hover {
+            border-color: var(--error);
+            color: var(--error)
+        }
+
+        .modal h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: var(--deep);
+            margin-bottom: 16px
+        }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: 26px;
+            right: 26px;
+            z-index: 9999;
+            background: var(--deep);
+            border: 1px solid rgba(201, 168, 76, .28);
+            border-radius: 12px;
+            padding: 13px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--white);
+            font-size: .84rem;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, .3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all .4s;
+            max-width: 340px
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1
+        }
+
+        .toast i {
+            font-size: .95rem
+        }
+
+        .toast.success i {
+            color: var(--violet)
+        }
+
+        .toast.error i {
+            color: var(--error)
+        }
+
+        /* ── DETAIL ROW ── */
+        .detail-row {
+            display: flex;
+            padding: 9px 0;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .detail-row:last-child {
+            border-bottom: none
+        }
+
+        .detail-label {
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            color: var(--muted);
+            width: 150px;
+            flex-shrink: 0;
+            padding-top: 2px
+        }
+
+        .detail-val {
+            font-size: .86rem;
+            color: var(--deep);
+            font-weight: 500;
+            flex: 1
+        }
+
+        /* ── TIMELINE ── */
+        .timeline {
+            position: relative
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 13px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border)
+        }
+
+        .tl-item {
+            position: relative;
+            padding-left: 38px;
+            margin-bottom: 20px
+        }
+
+        .tl-dot {
+            position: absolute;
+            left: 5px;
+            top: 4px;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .tl-dot.done {
+            border-color: var(--success);
+            background: var(--success)
+        }
+
+        .tl-dot.active {
+            border-color: var(--violet);
+            background: var(--violet)
+        }
+
+        .tl-dot i {
+            font-size: .48rem;
+            color: var(--white)
+        }
+
+        .tl-box {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 12px 16px
+        }
+
+        .tl-date {
+            font-size: .7rem;
+            color: var(--muted);
+            margin-bottom: 3px
+        }
+
+        .tl-title {
+            font-weight: 600;
+            font-size: .84rem;
+            color: var(--deep)
+        }
+
+        .tl-desc {
+            font-size: .79rem;
+            color: var(--muted);
+            line-height: 1.55;
+            margin-top: 2px
+        }
+
+        /* ── MESSAGES ── */
+        .msg-item {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 16px;
+            margin-bottom: 9px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .msg-item:hover {
+            border-color: var(--violet)
+        }
+
+        .msg-from {
+            font-weight: 600;
+            font-size: .84rem;
+            color: var(--deep)
+        }
+
+        .msg-time {
+            font-size: .72rem;
+            color: var(--muted)
+        }
+
+        .msg-preview {
+            font-size: .8rem;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        .msg-body {
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            font-size: .84rem;
+            color: var(--text);
+            line-height: 1.8
+        }
+
+        .msg-item.open .msg-body {
+            display: block
+        }
+
+        /* ── QUICK ACTIONS ── */
+        .qa-btn {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 10px 13px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--white);
+            color: var(--text);
+            font-size: .83rem;
+            cursor: pointer;
+            transition: all .2s;
+            width: 100%;
+            margin-bottom: 8px;
+            font-family: 'DM Sans', sans-serif
+        }
+
+        .qa-btn:hover {
+            border-color: var(--violet);
+            color: var(--violet)
+        }
+
+        .qa-btn i {
+            color: var(--violet);
+            width: 15px;
+            text-align: center
+        }
+
+        /* ── MOBILE MENU TOGGLE ── */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: var(--deep);
+            cursor: pointer;
+            padding: 8px 12px;
+            margin-right: 10px;
+        }
+
+        .menu-toggle:hover {
+            color: var(--violet);
+        }
+
+        /* ── RESPONSIVE DESIGN ── */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .stats-row {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            #login-page {
+                background-attachment: scroll;
+            }
+
+            :root {
+                --topbar: 56px;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 70%;
+                max-width: 280px;
+                height: 100vh;
+                background: var(--deep);
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 1000;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .menu-toggle {
+                display: flex;
+                align-items: center;
+            }
+
+            .topbar {
+                padding: 0 16px;
+            }
+
+            .topbar h1 {
+                font-size: 1rem;
+            }
+
+            .content {
+                padding: 16px;
+            }
+
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .stat-val {
+                font-size: 1.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.65rem;
+            }
+
+            .topbar-right {
+                gap: 8px;
+            }
+
+            .topbar-link {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            :root {
+                --topbar: 52px;
+            }
+
+            .sb-head {
+                padding: 12px;
+            }
+
+            .sb-logo {
+                width: 32px;
+                height: 32px;
+            }
+
+            .sb-school {
+                font-size: 0.75rem;
+            }
+
+            .sb-role {
+                font-size: 0.65rem;
+            }
+
+            .topbar h1 {
+                font-size: 0.9rem;
+            }
+
+            .stat-val {
+                font-size: 1.3rem;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="icon" type="image/jpeg" href="./larbec piccs/image1.jpeg">
+</head>
+
+<body>
+
+    <!-- LOADING -->
+    <div id="splash">
+        <div class="splash-ring"></div>
+        <div class="splash-name">Larbec International</div>
+        <div class="splash-sub">Admin Portal</div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toast-msg"></span></div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal-box">
+            <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <!-- ══════════════ LOGIN PAGE ══════════════ -->
+    <div id="login-page">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="login-logo">
+                    <img src="./larbec piccs/image1.jpeg" alt="Larbec Logo" />
+                </div>
+                <div class="login-school-info">
+                    <h3>Larbec International Academy</h3>
+                    <p>Admin Portal</p>
+                </div>
+            </div>
+            <h2>Admin Portal</h2>
+            <p>Larbec International Academy — Staff Access</p>
+
+            <label class="fl">Email Address</label>
+            <input class="fi" id="adm-email" type="email" placeholder="admin@hybridmontessori.com" />
+            <label class="fl">Password</label>
+            <input class="fi" id="adm-pass" type="password" placeholder="••••••••" />
+            <button class="btn-login" onclick="doAdminLogin()">
+                <i class="fas fa-sign-in-alt" style="margin-right:8px"></i>Sign In to Admin Portal
+            </button>
+            <div class="login-err" id="login-err"><i class="fas fa-exclamation-circle"></i> <span
+                    id="login-err-msg">Invalid credentials</span></div>
+            <div style="text-align:center;margin-top:18px"><a href="../index.html"
+                    style="color:white;font-size:.8rem;text-decoration:none"><i class="fas fa-arrow-left"></i> Back to
+                    Website</a></div>
+        </div>
+    </div>
+
+    <!-- ══════════════ ADMIN PORTAL ══════════════ -->
+    <div id="portal">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sb-head">
+                <div class="sb-logo"><img src="./larbec piccs/image1.jpeg" alt="Larbec Logo" /></div>
+                <div>
+                    <div class="sb-school">Larbec International</div>
+                    <div class="sb-role">Admin Portal</div>
+                </div>
+            </div>
+            <nav class="sb-nav">
+                <div class="sb-section">Overview</div>
+                <button class="sb-link active" onclick="goSection('s-dashboard',this)"><i
+                        class="fas fa-tachometer-alt"></i> Dashboard</button>
+                <div class="sb-section">Applications</div>
+                <button class="sb-link" onclick="goSection('s-all',this)"><i class="fas fa-file-alt"></i> All
+                    Applications <span class="sb-badge" id="badge-all">0</span></button>
+                <button class="sb-link" onclick="goSection('s-pending',this)"><i class="fas fa-hourglass-half"></i>
+                    Pending Review <span class="sb-badge" id="badge-pending">0</span></button>
+                <button class="sb-link" onclick="goSection('s-accepted',this)"><i class="fas fa-check-circle"></i>
+                    Accepted</button>
+                <button class="sb-link" onclick="goSection('s-rejected',this)"><i class="fas fa-times-circle"></i>
+                    Rejected</button>
+                <div class="sb-section">Communication</div>
+                <button class="sb-link" onclick="goSection('s-messages',this)"><i class="fas fa-envelope"></i> Send
+                    Messages</button>
+                <button class="sb-link" onclick="goSection('s-inbox',this)"><i class="fas fa-inbox"></i> Message Log
+                    <span class="sb-badge" id="badge-msgs">0</span></button>
+                <div class="sb-section">System</div>
+                <button class="sb-link" onclick="goSection('s-settings',this)"><i class="fas fa-cog"></i>
+                    Settings</button>
+            </nav>
+            <div class="sb-footer">
+                <div class="sb-user">
+                    <div class="sb-avatar" id="admin-avatar">AD</div>
+                    <div>
+                        <div class="sb-uname" id="admin-name">Administrator</div>
+                        <div class="sb-uemail" id="admin-email-display">admin@Larbec.edu</div>
+                    </div>
+                    <button class="sb-logout" onclick="doLogout()" title="Logout"><i
+                            class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+            <div class="topbar">
+                <button class="menu-toggle" id="menu-toggle" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 id="page-title">Dashboard</h1>
+                <div class="topbar-right">
+                    <a href="index.html" class="topbar-link" title="Back to Home"><i class="fas fa-home"></i></a>
+                    <span class="tb-badge"><i class="fas fa-calendar"
+                            style="color:var(--violet);margin-right:5px"></i>AY
+                        2025/2026</span>
+                    <div class="sb-avatar" id="topbar-avatar"
+                        style="width:34px;height:34px;font-size:.76rem;cursor:pointer">AD</div>
+                </div>
+            </div>
+            <div class="content">
+
+                <!-- ── DASHBOARD ── -->
+                <div class="section active" id="s-dashboard">
+                    <div class="stats-row">
+                        <div class="stat-card" data-scroll-animation="bottom" data-scroll-delay="0">
+                            <div class="stat-val" id="st-total">0</div>
+                            <div class="stat-label">Total Applications</div>
+                        </div>
+                        <div class="stat-card c-warn" data-scroll-animation="bottom" data-scroll-delay="80">
+                            <div class="stat-val" id="st-pending">0</div>
+                            <div class="stat-label">Pending Review</div>
+                        </div>
+                        <div class="stat-card c-green" data-scroll-animation="bottom" data-scroll-delay="160">
+                            <div class="stat-val" id="st-accepted">0</div>
+                            <div class="stat-label">Accepted</div>
+                        </div>
+                        <div class="stat-card c-red" data-scroll-animation="bottom" data-scroll-delay="240">
+                            <div class="stat-val" id="st-rejected">0</div>
+                            <div class="stat-label">Rejected</div>
+                        </div>
+                    </div>
+                    <div class="two-col">
+                        <div>
+                            <div class="tbl-card">
+                                <div class="tbl-head">
+                                    <div class="tbl-title">Recent Applications</div>
+                                    <button class="abtn abtn-violet" onclick="goSection('s-all',null)">View All</button>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>Class</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dash-recent-tbl">
+                                        <tr>
+                                            <td colspan="4" style="text-align:center;color:var(--muted);padding:24px">
+                                                Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="wbox">
+                                <div class="wbox-title">Quick Actions</div>
+                                <button class="qa-btn" onclick="goSection('s-messages',null)"><i
+                                        class="fas fa-envelope"></i> Compose Message</button>
+                                <button class="qa-btn" onclick="goSection('s-all',null)"><i class="fas fa-file-alt"></i>
+                                    Review Applications</button>
+                                <button class="qa-btn" onclick="goSection('s-pending',null)"><i
+                                        class="fas fa-hourglass-half"></i> Pending Applications</button>
+                            </div>
+                            <div class="wbox">
+                                <div class="wbox-title">Status Breakdown</div>
+                                <div id="dash-breakdown" style="font-size:.84rem;line-height:2.4;color:var(--text)">
+                                    Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── ALL APPLICATIONS ── -->
+                <div class="section" id="s-all">
+                    <div class="tbl-card">
+                        <div class="tbl-head">
+                            <div class="tbl-title">All Applications</div>
+                            <div class="tbl-actions">
+                                <div class="search-box"><i class="fas fa-search"
+                                        style="color:var(--muted);font-size:.8rem"></i><input id="search-all"
+                                        placeholder="Search name, code, email..."
+                                        oninput="filterTable('all-tbl',this.value)" /></div>
+                            </div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Student</th>
+                                    <th>Class</th>
+                                    <th>Parent Email</th>
+                                    <th>Date</th>
+                                    <th>Mode</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-tbl">
+                                <tr>
+                                    <td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Loading
+                                        applications...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ── PENDING ── -->
+                <div class="section" id="s-pending">
+                    <div class="tbl-card">
+                        <div class="tbl-head">
+                            <div class="tbl-title">Applications Pending Review</div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Student</th>
+                                    <th>Class</th>
+                                    <th>Submitted</th>
+                                    <th>Days Waiting</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-tbl">
+                                <tr>
+                                    <td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Loading...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ── ACCEPTED ── -->
+                <div class="section" id="s-accepted">
+                    <div class="tbl-card">
+                        <div class="tbl-head">
+                            <div class="tbl-title">Accepted Applicants</div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Student</th>
+                                    <th>Class</th>
+                                    <th>Date Accepted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accepted-tbl">
+                                <tr>
+                                    <td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Loading...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ── REJECTED ── -->
+                <div class="section" id="s-rejected">
+                    <div class="tbl-card">
+                        <div class="tbl-head">
+                            <div class="tbl-title">Rejected Applications</div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Student</th>
+                                    <th>Class</th>
+                                    <th>Date</th>
+                                    <th>Reason</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rejected-tbl">
+                                <tr>
+                                    <td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Loading...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ── SEND MESSAGES ── -->
+                <div class="section" id="s-messages">
+                    <div class="two-col">
+                        <div class="wbox">
+                            <div class="wbox-title">Compose Message to Student</div>
+                            <div class="compose-header"><label>To:</label><input class="fi-light" id="msg-to"
+                                    placeholder="Admission code or student name..."
+                                    style="border:none;padding:0;background:transparent;font-size:.88rem;outline:none">
+                            </div>
+                            <div class="compose-header"><label>Re:</label><input class="fi-light" id="msg-subject"
+                                    placeholder="Subject..."
+                                    style="border:none;padding:0;background:transparent;font-size:.88rem;outline:none">
+                            </div>
+                            <div
+                                style="margin-top:10px;margin-bottom:10px;font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">
+                                Quick Templates:</div>
+                            <div class="template-btns">
+                                <button class="tpl-btn" onclick="useTemplate('welcome')">Welcome</button>
+                                <button class="tpl-btn" onclick="useTemplate('docrequest')">Request Docs</button>
+                                <button class="tpl-btn" onclick="useTemplate('entranceexam')">Entrance Exam</button>
+                                <button class="tpl-btn" onclick="useTemplate('accepted')">Accepted</button>
+                                <button class="tpl-btn" onclick="useTemplate('rejected')">Rejected</button>
+                                <button class="tpl-btn" onclick="useTemplate('interview')">Interview</button>
+                                <button class="tpl-btn" onclick="useTemplate('reminder')">Reminder</button>
+                            </div>
+                            <textarea class="fi-light" id="msg-body" placeholder="Type your message here..."
+                                style="width:100%;min-height:180px;border:1.5px solid var(--border);border-radius:9px;padding:12px;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s"
+                                onfocus="this.style.borderColor='var(--violet)'"
+                                onblur="this.style.borderColor='var(--border)'"></textarea>
+                            <button class="btn-login" style="margin-top:12px" onclick="sendMessage()"><i
+                                    class="fas fa-paper-plane" style="margin-right:8px"></i>Send Message</button>
+                        </div>
+                        <div class="wbox">
+                            <div class="wbox-title">Select Recipient</div>
+                            <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px">Select an application to
+                                message, or type the code manually in the To field above.</p>
+                            <div id="recipient-list" style="max-height:420px;overflow-y:auto">
+                                <div style="text-align:center;color:var(--muted);padding:20px;font-size:.84rem">Loading
+                                    applications...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── MESSAGE LOG / INBOX ── -->
+                <div class="section" id="s-inbox">
+                    <div class="wbox">
+                        <div class="wbox-title">All Sent Messages</div>
+                        <div id="inbox-list">
+                            <div style="text-align:center;color:var(--muted);padding:20px;font-size:.84rem">Loading
+                                messages...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── SETTINGS ── -->
+                <div class="section" id="s-settings">
+                    <div class="two-col">
+                        <div class="wbox">
+                            <div class="wbox-title">School Information</div>
+                            <div style="margin-bottom:14px"><label class="fl" style="color:var(--muted)">School
+                                    Name</label><input class="fi-light"
+                                    style="border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;width:100%;font-family:'DM Sans',sans-serif;font-size:.88rem"
+                                    value="Larbec International Academy"></div>
+                            <div style="margin-bottom:14px"><label class="fl" style="color:var(--muted)">Academic
+                                    Year</label><input class="fi-light"
+                                    style="border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;width:100%;font-family:'DM Sans',sans-serif;font-size:.88rem"
+                                    value="2025/2026"></div>
+                            <div style="margin-bottom:14px"><label class="fl" style="color:var(--muted)">Contact
+                                    Email</label><input class="fi-light"
+                                    style="border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;width:100%;font-family:'DM Sans',sans-serif;font-size:.88rem"
+                                    value="kofigyansah@gmail.com"></div>
+                            <div style="margin-bottom:14px"><label class="fl"
+                                    style="color:var(--muted)">Phone</label><input class="fi-light"
+                                    style="border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;width:100%;font-family:'DM Sans',sans-serif;font-size:.88sm"
+                                    value="0244417789"></div>
+                            <div style="margin-bottom:14px"><label class="fl"
+                                    style="color:var(--muted)">Address</label><input class="fi-light"
+                                    style="border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;width:100%;font-family:'DM Sans',sans-serif;font-size:.88rem"
+                                    value="Atonsu-Fabi, Kumasi, Ghana"></div>
+                            <button class="btn-login" onclick="showToast('Settings saved successfully','success')"><i
+                                    class="fas fa-save" style="margin-right:8px"></i>Save Settings</button>
+                        </div>
+                        <div>
+                            <div class="wbox">
+                                <div class="wbox-title">Firebase Configuration</div>
+                                <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px;line-height:1.7">This
+                                    portal uses Firebase Realtime Database &amp; Storage. Edit <code
+                                        style="background:var(--off);padding:2px 6px;border-radius:4px;font-size:.78rem">js/firebase-config.js</code>
+                                    to update your project credentials.</p>
+                                <div
+                                    style="background:var(--off);border-radius:8px;padding:14px;font-size:.8rem;color:var(--muted);line-height:1.9;font-family:monospace">
+                                    databaseURL: <span
+                                        style="color:var(--violet)">your-project.firebaseio.com</span><br>
+                                    storageBucket: <span style="color:var(--violet)">your-project.appspot.com</span>
+                                </div>
+                            </div>
+                            <div class="wbox">
+                                <div class="wbox-title">Admin Account</div>
+                                <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;line-height:1.7">Admin
+                                    accounts are managed in Firebase Authentication. Go to your <a
+                                        href="https://console.firebase.google.com" target="_blank"
+                                        style="color:var(--violet)">Firebase Console</a> → Authentication → Add user.
+                                </p>
+                                <div class="detail-row">
+                                    <div class="detail-label">Signed in as</div>
+                                    <div class="detail-val" id="settings-email">—</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Role</div>
+                                    <div class="detail-val">Administrator</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /content -->
+        </main>
+    </div><!-- /portal -->
+
+    <!-- ══════════════ FIREBASE + LOGIC ══════════════ -->
+    <script>
+        // ── FIREBASE CONFIG ────────────────────────────────────────────────────────
+        // Replace with your actual Firebase project credentials
+        const firebaseConfig = {
+            apiKey: "AIzaSyCaxywVJqxr9jnLk5d8rmxC5SUoS2hrzEs",
+            authDomain: "larbec-2b730.firebaseapp.com",
+            databaseURL: "https://larbec-2b730-default-rtdb.firebaseio.com",
+            projectId: "larbec-2b730",
+            storageBucket: "larbec-2b730.firebasestorage.app",
+            messagingSenderId: "33993356225",
+            appId: "1:33993356225:web:d4cabc2d2f7a0f6be17540",
+            measurementId: "G-YMXLDP19HK"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const storage = firebase.storage();
+        const auth = firebase.auth();
+
+        // ── LOADING / AUTH ─────────────────────────────────────────────────────────
+        window.addEventListener('load', () => {
+            auth.onAuthStateChanged(user => {
+                document.getElementById('splash').classList.add('gone');
+                if (user) {
+                    showPortal(user);
+                } else {
+                    document.getElementById('login-page').style.display = 'flex';
+                }
+            });
+        });
+
+        async function doAdminLogin() {
+            const email = document.getElementById('adm-email').value.trim();
+            const pass = document.getElementById('adm-pass').value;
+            const errEl = document.getElementById('login-err');
+            errEl.style.display = 'none';
+            if (!email || !pass) { showLoginErr('Please enter email and password.'); return; }
+            try {
+                document.querySelector('.btn-login').textContent = 'Signing in...';
+                const cred = await auth.signInWithEmailAndPassword(email, pass);
+                showPortal(cred.user);
+            } catch (e) {
+                document.querySelector('.btn-login').innerHTML = '<i class="fas fa-sign-in-alt" style="margin-right:8px"></i>Sign In to Admin Portal';
+                showLoginErr(e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found'
+                    ? 'Invalid email or password.' : e.message);
+            }
+        }
+
+        function showLoginErr(msg) {
+            const el = document.getElementById('login-err');
+            document.getElementById('login-err-msg').textContent = msg;
+            el.style.display = 'block';
+        }
+
+        function showPortal(user) {
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('portal').classList.add('show');
+            const initials = user.email.substring(0, 2).toUpperCase();
+            document.getElementById('admin-avatar').textContent = initials;
+            document.getElementById('topbar-avatar').textContent = initials;
+            document.getElementById('admin-name').textContent = user.displayName || 'Administrator';
+            document.getElementById('admin-email-display').textContent = user.email;
+            document.getElementById('settings-email').textContent = user.email;
+            loadAllData();
+        }
+
+        async function doLogout() {
+            await auth.signOut();
+            document.getElementById('portal').classList.remove('show');
+            document.getElementById('login-page').style.display = 'flex';
+            document.querySelector('.btn-login').innerHTML = '<i class="fas fa-sign-in-alt" style="margin-right:8px"></i>Sign In to Admin Portal';
+        }
+
+        // ── DATA LOADING ────────────────────────────────────────────────────────────
+        let allApps = [];
+
+        function loadAllData() {
+            db.ref('applications').on('value', snap => {
+                allApps = [];
+                if (snap.exists()) snap.forEach(c => allApps.push({ id: c.key, ...c.val() }));
+                allApps.sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+                renderDashboard();
+                renderAllTable();
+                renderPendingTable();
+                renderAcceptedTable();
+                renderRejectedTable();
+                renderRecipientList();
+                renderInbox();
+            });
+        }
+
+        // ── DASHBOARD ──────────────────────────────────────────────────────────────
+        function renderDashboard() {
+            const total = allApps.length;
+            const pending = allApps.filter(a => a.status === 'pending').length;
+            const accepted = allApps.filter(a => a.status === 'accepted').length;
+            const rejected = allApps.filter(a => a.status === 'rejected').length;
+            const docs = allApps.filter(a => a.status === 'docs').length;
+            document.getElementById('st-total').textContent = total;
+            document.getElementById('st-pending').textContent = pending;
+            document.getElementById('st-accepted').textContent = accepted;
+            document.getElementById('st-rejected').textContent = rejected;
+            document.getElementById('badge-all').textContent = total;
+            document.getElementById('badge-pending').textContent = pending;
+
+            const recent5 = allApps.slice(0, 5);
+            document.getElementById('dash-recent-tbl').innerHTML = recent5.length
+                ? recent5.map(a => `<tr>
+        <td><strong>${a.studentFirstName || ''} ${a.studentLastName || ''}</strong><br><small style="color:var(--muted)">${a.id}</small></td>
+        <td>${a.classApplied || '—'}</td>
+        <td>${statusBadge(a.status)}</td>
+        <td><div class="action-btns">
+          ${a.status === 'pending' ? `<button class="abtn abtn-green" onclick="acceptApp('${a.id}')">Accept</button><button class="abtn abtn-red" onclick="openRejectModal('${a.id}')">Reject</button>` : ''}
+          <button class="abtn abtn-blue" onclick="openViewModal('${a.id}')">View</button>
+        </div></td>
+      </tr>`).join('')
+                : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">No applications yet.</td></tr>';
+
+            // Breakdown
+            if (total === 0) { document.getElementById('dash-breakdown').textContent = 'No applications yet.'; return; }
+            document.getElementById('dash-breakdown').innerHTML = `
+    ${mkBar('Accepted', accepted, total, '#2E7D32')}
+    ${mkBar('Pending', pending, total, 'var(--warn)')}
+    ${mkBar('Rejected', rejected, total, 'var(--error)')}
+    ${mkBar('Docs Req.', docs, total, 'var(--violet)')}`;
+        }
+
+        function mkBar(label, n, total, color) {
+            const pct = total ? Math.round(n / total * 100) : 0;
+            return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <span style="width:70px;font-size:.78rem;color:var(--muted)">${label}</span>
+    <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width .5s"></div>
+    </div>
+    <span style="font-size:.78rem;font-weight:600;color:var(--deep);width:24px;text-align:right">${n}</span>
+  </div>`;
+        }
+
+        // ── ALL TABLE ───────────────────────────────────────────────────────────────
+        function renderAllTable() {
+            document.getElementById('all-tbl').innerHTML = allApps.length
+                ? allApps.map(a => appRow(a, true)).join('')
+                : '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No applications found.</td></tr>';
+        }
+
+        function appRow(a, full = true) {
+            const name = `${a.studentFirstName || ''} ${a.studentLastName || ''}`.trim() || '—';
+            const date = a.submittedAt ? (() => { try { return new Date(a.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch (e) { return '—'; } })() : '—';
+            if (!full) return `<tr>
+    <td><code style="color:var(--violet);font-size:.76rem">${a.id}</code></td>
+    <td><strong>${name}</strong></td><td>${a.classApplied || '—'}</td>
+    <td>${a.academicYear || '—'}</td><td>${statusBadge(a.status)}</td>
+    <td><div class="action-btns">
+      ${a.status === 'pending' ? `<button class="abtn abtn-green" onclick="acceptApp('${a.id}')">Accept</button><button class="abtn abtn-red" onclick="openRejectModal('${a.id}')">Reject</button>` : ''}
+      <button class="abtn abtn-blue" onclick="openViewModal('${a.id}')">View</button>
+      <button class="abtn abtn-purple" onclick="openMsgModal('${a.id}','${name}')">Message</button>
+    </div></td></tr>`;
+
+            return `<tr>
+    <td><code style="color:var(--violet);font-size:.76rem">${a.id}</code></td>
+    <td><strong>${name}</strong></td>
+    <td>${a.classApplied || '—'}</td>
+    <td style="font-size:.78rem">${a.email || '—'}</td>
+    <td>${date}</td>
+    <td><span style="font-size:.78rem">${a.learningMode || '—'}</span></td>
+    <td>${statusBadge(a.status)}</td>
+    <td><div class="action-btns">
+      ${a.status === 'pending' ? `<button class="abtn abtn-green" onclick="acceptApp('${a.id}')">Accept</button><button class="abtn abtn-red" onclick="openRejectModal('${a.id}')">Reject</button><button class="abtn abtn-violet" onclick="openDocsModal('${a.id}','${name}')">Docs</button>` : ''}
+      <button class="abtn abtn-blue" onclick="openViewModal('${a.id}')">View</button>
+      <button class="abtn abtn-purple" onclick="openMsgModal('${a.id}','${name}')">Msg</button>
+    </div></td></tr>`;
+        }
+
+        function renderPendingTable() {
+            const pend = allApps.filter(a => a.status === 'pending');
+            document.getElementById('badge-pending').textContent = pend.length;
+            document.getElementById('pending-tbl').innerHTML = pend.length
+                ? pend.map(a => {
+                    const name = `${a.studentFirstName || ''} ${a.studentLastName || ''}`.trim();
+                    const days = a.submittedAt ? Math.floor((Date.now() - a.submittedAt) / 86400000) : 0;
+                    const date = a.submittedAt ? (() => { try { return new Date(a.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch (e) { return '—'; } })() : '—';
+                    return `<tr>
+          <td><code style="color:var(--violet);font-size:.76rem">${a.id}</code></td>
+          <td><strong>${name}</strong></td><td>${a.classApplied || '—'}</td>
+          <td>${date}</td>
+          <td><span style="color:${days > 7 ? 'var(--error)' : 'var(--warn)'};font-weight:600">${days}d</span></td>
+          <td><div class="action-btns">
+            <button class="abtn abtn-green" onclick="acceptApp('${a.id}')">Accept</button>
+            <button class="abtn abtn-red" onclick="openRejectModal('${a.id}')">Reject</button>
+            <button class="abtn abtn-violet" onclick="openDocsModal('${a.id}','${name}')">Req. Docs</button>
+            <button class="abtn abtn-blue" onclick="openViewModal('${a.id}')">View</button>
+          </div></td></tr>`;
+                }).join('')
+                : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No pending applications.</td></tr>';
+        }
+
+        function renderAcceptedTable() {
+            const acc = allApps.filter(a => a.status === 'accepted');
+            document.getElementById('accepted-tbl').innerHTML = acc.length
+                ? acc.map(a => {
+                    const name = `${a.studentFirstName || ''} ${a.studentLastName || ''}`.trim();
+                    const date = a.updatedAt ? (() => { try { return new Date(a.updatedAt).toLocaleDateString('en-GB'); } catch (e) { return '—'; } })() : '—';
+                    return `<tr>
+          <td><code style="color:var(--success);font-size:.76rem">${a.id}</code></td>
+          <td><strong>${name}</strong></td><td>${a.classApplied || '—'}</td><td>${date}</td>
+          <td><div class="action-btns">
+            <button class="abtn abtn-blue" onclick="openViewModal('${a.id}')">View</button>
+            <button class="abtn abtn-purple" onclick="openMsgModal('${a.id}','${name}')">Message</button>
+          </div></td></tr>`;
+                }).join('')
+                : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No accepted applications yet.</td></tr>';
+        }
+
+        function renderRejectedTable() {
+            const rej = allApps.filter(a => a.status === 'rejected');
+            document.getElementById('rejected-tbl').innerHTML = rej.length
+                ? rej.map(a => {
+                    const name = `${a.studentFirstName || ''} ${a.studentLastName || ''}`.trim();
+                    const date = a.updatedAt ? (() => { try { return new Date(a.updatedAt).toLocaleDateString('en-GB'); } catch (e) { return '—'; } })() : '—';
+                    return `<tr>
+          <td><code style="color:var(--error);font-size:.76rem">${a.id}</code></td>
+          <td><strong>${name}</strong></td><td>${a.classApplied || '—'}</td><td>${date}</td>
+          <td style="font-size:.78rem;color:var(--muted)">${a.statusNote || '—'}</td>
+          <td><div class="action-btns">
+            <button class="abtn abtn-blue" onclick="openViewModal('${a.id}')">View</button>
+            <button class="abtn abtn-purple" onclick="openMsgModal('${a.id}','${name}')">Message</button>
+          </div></td></tr>`;
+                }).join('')
+                : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No rejected applications.</td></tr>';
+        }
+
+        // ── ACCEPT / REJECT / DOCS REQUEST ─────────────────────────────────────────
+        async function acceptApp(code) {
+            const app = allApps.find(a => a.id === code);
+            if (!app) return;
+            const name = `${app.studentFirstName || ''} ${app.studentLastName || ''}`.trim();
+            openModal(`
+    <h3>✅ Confirm Acceptance</h3>
+    <p style="color:var(--muted);font-size:.86rem;margin-bottom:20px;line-height:1.7">
+      You are about to <strong>accept</strong> the application of <strong>${name}</strong> (${code}) for <strong>${app.classApplied}</strong>.
+      An acceptance letter will be generated in their student portal.
+    </p>
+    <div style="margin-bottom:14px">
+      <label class="fl" style="color:var(--muted)">Optional note to student</label>
+      <textarea class="fi-light" id="accept-note" style="border:1.5px solid var(--border);border-radius:9px;padding:11px;width:100%;min-height:80px;font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none" placeholder="e.g. Please report to school by 3rd February with original documents..."></textarea>
+    </div>
+    <div style="display:flex;gap:9px">
+      <button class="abtn abtn-green" style="padding:10px 20px;font-size:.86rem" onclick="doAccept('${code}')"><i class="fas fa-check"></i> Confirm Accept</button>
+      <button class="abtn abtn-blue" style="padding:10px 20px;font-size:.86rem" onclick="closeModal()">Cancel</button>
+    </div>`);
+        }
+
+        async function doAccept(code) {
+            const note = document.getElementById('accept-note')?.value || '';
+            await db.ref('applications/' + code).update({ status: 'accepted', statusNote: note, updatedAt: Date.now() });
+            // Auto-send message to student
+            await db.ref('applications/' + code + '/messages').push({
+                subject: 'Congratulations – Admission Offer',
+                body: `Dear Parent/Guardian,\n\nWe are delighted to inform you that your child has been OFFERED ADMISSION to Larbec International Academy for the 2025/2026 academic year.\n\n${note ? 'Note from the Headmaster:\n' + note + '\n\n' : ''}Please log in to your student portal to download your official Admission Letter.\n\nCongratulations and welcome to the Larbec International family!\n\nMr. Kofi Gyansah\nHeadmaster, Larbec International Academy`,
+                from: 'Admin', sentAt: Date.now(), read: false
+            });
+            closeModal();
+            showToast(`${code} accepted successfully`, 'success');
+            setTimeout(() => downloadAcceptanceLetter(code), 500);
+        }
+
+        function openRejectModal(code) {
+            const app = allApps.find(a => a.id === code);
+            if (!app) return;
+            const name = `${app.studentFirstName || ''} ${app.studentLastName || ''}`.trim();
+            openModal(`
+    <h3>Reject Application</h3>
+    <p style="color:var(--muted);font-size:.86rem;margin-bottom:18px;line-height:1.7">You are about to reject the application of <strong>${name}</strong> (${code}). Please provide a reason — this will appear in their rejection letter.</p>
+    <div style="margin-bottom:14px">
+      <label class="fl" style="color:var(--muted)">Reason for Rejection *</label>
+      <textarea class="fi-light" id="reject-reason" style="border:1.5px solid var(--border);border-radius:9px;padding:11px;width:100%;min-height:110px;font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none" placeholder="e.g. The class you applied for is at full capacity. We encourage you to re-apply next academic year."></textarea>
+    </div>
+    <div style="display:flex;gap:9px">
+      <button class="abtn abtn-red" style="padding:10px 20px;font-size:.86rem" onclick="doReject('${code}')"><i class="fas fa-times"></i> Confirm Reject</button>
+      <button class="abtn abtn-blue" style="padding:10px 20px;font-size:.86rem" onclick="closeModal()">Cancel</button>
+    </div>`);
+        }
+
+        async function doReject(code) {
+            const reason = document.getElementById('reject-reason')?.value?.trim();
+            if (!reason) { showToast('Please provide a reason for rejection.', 'error'); return; }
+            await db.ref('applications/' + code).update({ status: 'rejected', statusNote: reason, updatedAt: Date.now() });
+            await db.ref('applications/' + code + '/messages').push({
+                subject: 'Admission Application Update',
+                body: `Dear Parent/Guardian,\n\nThank you for your interest in Larbec International Academy. After careful review by our admissions committee, we regret to inform you that we are unable to offer your child admission at this time.\n\nReason: ${reason}\n\nWe appreciate your interest and encourage you to re-apply in the next academic year. Please log in to your student portal to download the official letter.\n\nWarm regards,\nMr. Kofi Gyansah\nHeadmaster, Larbec International Academy`,
+                from: 'Admin', sentAt: Date.now(), read: false
+            });
+            closeModal();
+            showToast(`${code} rejected`, 'success');
+            setTimeout(() => downloadRejectionLetter(code), 500);
+        }
+
+        function openDocsModal(code, name) {
+            openModal(`
+    <h3>Request Additional Documents</h3>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:18px;line-height:1.7">Select the documents to request from <strong>${name}</strong> (${code}). The student will see this in their portal and can upload the files.</p>
+    <div style="margin-bottom:14px">
+      ${['Birth Certificate', 'Passport Photo', 'Parent/Guardian ID', 'Previous School Report Card', 'Medical Certificate', 'Immunisation Record', 'Baptism Certificate', 'Letter of Recommendation'].map(d =>
+                `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--off);border-radius:8px;margin-bottom:7px;cursor:pointer;font-size:.85rem;border:1px solid var(--border)">
+          <input type="checkbox" class="doc-check" value="${d}" style="accent-color:var(--violet)"> ${d}
+        </label>`).join('')}
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="fl" style="color:var(--muted)">Additional note</label>
+      <textarea class="fi-light" id="docs-note" style="border:1.5px solid var(--border);border-radius:9px;padding:11px;width:100%;min-height:80px;font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none" placeholder="Any specific instructions for the documents..."></textarea>
+    </div>
+    <button class="abtn abtn-violet" style="padding:10px 22px;font-size:.86rem" onclick="doRequestDocs('${code}','${name}')"><i class="fas fa-paper-plane"></i> Send Request</button>`);
+        }
+
+        async function doRequestDocs(code, name) {
+            const checked = [...document.querySelectorAll('.doc-check:checked')].map(c => c.value);
+            if (!checked.length) { showToast('Please select at least one document.', 'error'); return; }
+            const note = document.getElementById('docs-note')?.value || '';
+            await db.ref('applications/' + code).update({ status: 'docs', statusNote: 'Documents requested: ' + checked.join(', '), updatedAt: Date.now() });
+            await db.ref('applications/' + code + '/docRequests').set({ requested: checked, note, requestedAt: Date.now() });
+            await db.ref('applications/' + code + '/messages').push({
+                subject: 'Action Required – Additional Documents Needed',
+                body: `Dear Parent/Guardian,\n\nWhile reviewing your application (${code}), we found that the following document(s) need to be submitted:\n\n${checked.map(d => '• ' + d).join('\n')}\n\n${note ? 'Note: ' + note + '\n\n' : ''}Please log in to your student portal and go to the Documents section to upload the required files.\n\nThank you for your prompt attention.\n\nLarbec Admissions Team`,
+                from: 'Admin', sentAt: Date.now(), read: false
+            });
+            closeModal();
+            showToast(`Document request sent to ${name}`, 'success');
+        }
+
+        // ── MESSAGES ────────────────────────────────────────────────────────────────
+        function renderRecipientList() {
+            document.getElementById('recipient-list').innerHTML = allApps.length
+                ? allApps.map(a => {
+                    const name = `${a.studentFirstName || ''} ${a.studentLastName || ''}`.trim();
+                    return `<div style="display:flex;align-items:center;gap:11px;padding:10px;border-radius:8px;cursor:pointer;transition:background .2s;margin-bottom:6px;border:1px solid var(--border)" onclick="selectRecipient('${a.id}','${name}')" onmouseover="this.style.background='var(--off)'" onmouseout="this.style.background='transparent'">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--violet-light));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--deep);font-size:.74rem;flex-shrink:0">${(a.studentFirstName || '?')[0]}${(a.studentLastName || '?')[0]}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:.83rem;color:var(--deep)">${name}</div>
+            <div style="font-size:.73rem;color:var(--muted)">${a.id} · ${a.classApplied || '—'}</div>
+          </div>
+          ${statusBadge(a.status)}
+        </div>`;
+                }).join('')
+                : '<div style="color:var(--muted);font-size:.84rem;text-align:center;padding:20px">No applications loaded.</div>';
+        }
+
+        function selectRecipient(code, name) {
+            document.getElementById('msg-to').value = code + ' – ' + name;
+        }
+
+        const templates = {
+            welcome: `Dear Parent/Guardian,\n\nThank you for submitting an application to Larbec International Academy. We have received your application and documents successfully. Our admissions team will review your submission and respond within 5–7 working days.\n\nWarm regards,\nMr. Kofi Gyansah\nHeadmaster, Larbec`,
+            docrequest: `Dear Parent/Guardian,\n\nWhile reviewing your application, we noticed that certain required documents are missing or need to be resubmitted. Please log in to your student portal and upload the requested documents at your earliest convenience.\n\nThank you,\nLarbec Documents Team`,
+            entranceexam: `Dear Parent/Guardian,\n\nCongratulations! Your child has been selected to participate in our Entrance Assessment as part of the admissions process. This assessment helps us understand your child's learning style and academic readiness.\n\nASSESSMENT DETAILS:\nDate: [Please specify date]\nTime: [Please specify time]\nLocation: Larbec International Academy Campus, Atonsu-Fabi\n\nREQUIRED DOCUMENTS TO BRING:\n• Birth Certificate (original)\n• Passport/ID Picture\n• Previous School Report Card\n• Parent's Ghana Card (original)\n\nPlease call 0244417789 to confirm attendance or if you need to reschedule.\n\nWe look forward to meeting your child!\n\nBest regards,\nMr. Kofi Gyansah\nHeadmaster, Larbec`,
+            accepted: `Dear Parent/Guardian,\n\nIt is our great pleasure to inform you that your child has been OFFERED ADMISSION to Larbec International Academy for the 2025/2026 academic year.\n\nPlease log in to your portal to download your official Admission Letter, and report to the school office within two weeks with all original documents.\n\nCongratulations and welcome!\nMr. Kofi Gyansah\nHeadmaster, Larbec International Academy`,
+            rejected: `Dear Parent/Guardian,\n\nThank you for your interest in Larbec International Academy. After careful consideration, we regret to inform you that we are unable to offer admission at this time. We encourage you to re-apply in the next academic year.\n\nBest wishes,\nMr. Kofi Gyansah\nHeadmaster, Larbec`,
+            interview: `Dear Parent/Guardian,\n\nAs part of our admissions process, we would like to invite your child for an assessment session at the school. Please call +233 26 643 4973 to schedule a convenient appointment.\n\nWe look forward to meeting you.\n\nLarbec Admissions Team`,
+            reminder: `Dear Parent/Guardian,\n\nThis is a friendly reminder that your application is currently under review. If you have any outstanding documents, please upload them in your student portal.\n\nShould you have any questions, contact us at kofigyansah@gmail.com or 0244417789.\n\nLarbec Admissions Team`
+        };
+
+        function useTemplate(key) {
+            if (templates[key]) document.getElementById('msg-body').value = templates[key];
+        }
+
+        async function sendMessage() {
+            const to = document.getElementById('msg-to').value.trim();
+            const subject = document.getElementById('msg-subject').value.trim();
+            const body = document.getElementById('msg-body').value.trim();
+            if (!to || !body) { showToast('Please fill in recipient and message.', 'error'); return; }
+            // Extract code from "CODE – Name" or use as-is
+            const code = to.includes('–') ? to.split('–')[0].trim() : to;
+            // Verify application exists
+            const app = allApps.find(a => a.id === code || a.id.toLowerCase() === code.toLowerCase());
+            if (!app) { showToast('Application code not found. Check the To field.', 'error'); return; }
+            await db.ref('applications/' + app.id + '/messages').push({
+                subject: subject || 'Message from Larbec Admin',
+                body, from: 'Admin', sentAt: Date.now(), read: false
+            });
+            document.getElementById('msg-to').value = '';
+            document.getElementById('msg-subject').value = '';
+            document.getElementById('msg-body').value = '';
+            showToast('Message sent to ' + app.id, 'success');
+            renderInbox();
+        }
+
+        function renderInbox() {
+            // Gather all messages across all applications
+            const msgs = [];
+            allApps.forEach(a => {
+                if (a.messages) {
+                    Object.entries(a.messages).forEach(([msgId, m]) => {
+                        const name = `${a.studentFirstName || ''} ${a.studentLastName || ''}`.trim();
+                        msgs.push({ ...m, appId: a.id, studentName: name, msgId });
+                    });
+                }
+            });
+            msgs.sort((a, b) => (b.sentAt || 0) - (a.sentAt || 0));
+            document.getElementById('badge-msgs').textContent = msgs.length;
+            document.getElementById('inbox-list').innerHTML = msgs.length
+                ? msgs.map(m => `
+        <div class="msg-item" onclick="this.classList.toggle('open')">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="msg-from">To: ${m.studentName} (${m.appId}) · ${m.subject || '—'}</div>
+            <div class="msg-time">${m.sentAt ? new Date(m.sentAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}</div>
+          </div>
+          <div class="msg-preview">${(m.body || '').substring(0, 90)}...</div>
+          <div class="msg-body" style="white-space:pre-wrap">${m.body || ''}</div>
+        </div>`).join('')
+                : '<div style="color:var(--muted);text-align:center;padding:24px;font-size:.84rem">No messages sent yet.</div>';
+        }
+
+
+
+        // ── VIEW APPLICATION MODAL ──────────────────────────────────────────────────
+        function openViewModal(code) {
+            const app = allApps.find(a => a.id === code);
+            if (!app) return;
+            const name = `${app.studentFirstName || ''} ${app.studentLastName || ''}`.trim();
+            openModal(`
+    <h3>Application: ${code}</h3>
+    <div style="margin-bottom:18px">${statusBadge(app.status)}</div>
+    <div style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Student Details</div>
+    <div class="detail-row"><div class="detail-label">Full Name</div><div class="detail-val"><strong>${name}</strong></div></div>
+    <div class="detail-row"><div class="detail-label">Date of Birth</div><div class="detail-val">${app.dateOfBirth || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Gender</div><div class="detail-val">${app.gender || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Nationality</div><div class="detail-val">${app.nationality || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Blood Group</div><div class="detail-val">${app.bloodGroup || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Religion</div><div class="detail-val">${app.religion || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Allergies</div><div class="detail-val">${app.allergies || 'None'}</div></div>
+    <div class="detail-row"><div class="detail-label">Home Address</div><div class="detail-val">${app.homeAddress || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Student Email</div><div class="detail-val">${app.email || '—'}</div></div>
+    <div style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 10px">Father</div>
+    <div class="detail-row"><div class="detail-label">Name</div><div class="detail-val">${app.fatherName || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Phone</div><div class="detail-val">${app.fatherPhone || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Email</div><div class="detail-val">${app.fatherEmail || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Occupation</div><div class="detail-val">${app.fatherOccupation || '—'}</div></div>
+    <div style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 10px">Mother</div>
+    <div class="detail-row"><div class="detail-label">Name</div><div class="detail-val">${app.motherName || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Phone</div><div class="detail-val">${app.motherPhone || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Email</div><div class="detail-val">${app.motherEmail || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Occupation</div><div class="detail-val">${app.motherOccupation || '—'}</div></div>
+    <div style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 10px">Guardian (if any)</div>
+    <div class="detail-row"><div class="detail-label">Name</div><div class="detail-val">${[app.guardianTitle, app.guardianFirstName, app.guardianLastName].filter(Boolean).join(' ') || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Relation</div><div class="detail-val">${app.guardianRelation || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Phone</div><div class="detail-val">${app.guardianPhone || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Email</div><div class="detail-val">${app.guardianEmail || '—'}</div></div>
+    <div style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 10px">Academic</div>
+    <div class="detail-row"><div class="detail-label">Class Applied</div><div class="detail-val"><strong>${app.classApplied || '—'}</strong></div></div>
+    <div class="detail-row"><div class="detail-label">Academic Year</div><div class="detail-val">${app.academicYear || '—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Previous School</div><div class="detail-val">${app.previousSchool || 'None'}</div></div>
+    <div class="detail-row"><div class="detail-label">Learning Mode</div><div class="detail-val">${app.learningMode || '—'}</div></div>
+    <div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap">
+      ${app.status === 'pending' ? `
+        <button class="abtn abtn-green" onclick="closeModal();acceptApp('${code}')">Accept</button>
+        <button class="abtn abtn-red" onclick="closeModal();openRejectModal('${code}')">Reject</button>
+        <button class="abtn abtn-violet" onclick="closeModal();openDocsModal('${code}','${name}')">Request Docs</button>` : ''}
+      <button class="abtn abtn-purple" onclick="closeModal();openMsgModal('${code}','${name}')">Send Message</button>
+      <button class="abtn abtn-blue" onclick="closeModal()">Close</button>
+    </div>`);
+        }
+
+        // ── MESSAGE FROM APP TABLE ───────────────────────────────────────────────────
+        function openMsgModal(code, name) {
+            closeModal();
+            goSection('s-messages', null);
+            document.getElementById('msg-to').value = code + ' – ' + name;
+            document.getElementById('msg-subject').focus();
+        }
+
+        // ── TABLE FILTER ─────────────────────────────────────────────────────────────
+        function filterTable(tableId, q) {
+            const rows = document.querySelectorAll('#' + tableId + ' tr');
+            const lower = q.toLowerCase();
+            rows.forEach(r => { r.style.display = r.textContent.toLowerCase().includes(lower) ? '' : 'none'; });
+        }
+
+        // ── MOBILE MENU TOGGLE ────────────────────────────────────────────────────────
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // Close menu when clicking on a nav item
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.sb-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('sidebar').classList.remove('active');
+                    }
+                });
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                const sidebar = document.getElementById('sidebar');
+                const toggle = document.getElementById('menu-toggle');
+                if (window.innerWidth <= 768 &&
+                    !sidebar.contains(e.target) &&
+                    !toggle.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            });
+        });
+
+        // ── NAVIGATION ────────────────────────────────────────────────────────────────
+        const sectionTitles = {
+            's-dashboard': 'Dashboard', 's-all': 'All Applications', 's-pending': 'Pending Review',
+            's-accepted': 'Accepted Applicants', 's-rejected': 'Rejected Applications',
+            's-messages': 'Send Messages', 's-inbox': 'Message Log', 's-documents': 'Documents', 's-settings': 'Settings'
+        };
+        function goSection(id, btnEl) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.sb-link').forEach(b => b.classList.remove('active'));
+            document.getElementById(id)?.classList.add('active');
+            if (btnEl) btnEl.classList.add('active');
+            else document.querySelectorAll('.sb-link').forEach(b => { if (b.getAttribute('onclick')?.includes(id)) b.classList.add('active'); });
+            document.getElementById('page-title').textContent = sectionTitles[id] || '';
+            if (id === 's-inbox') renderInbox();
+        }
+
+        // ── MODAL HELPERS ─────────────────────────────────────────────────────────────
+        function openModal(html) {
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-overlay').classList.add('open');
+        }
+        function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+        document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+        // ── TOAST ─────────────────────────────────────────────────────────────────────
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.className = 'toast ' + type;
+            t.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+            document.getElementById('toast-msg').textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        // ── STATUS BADGE ──────────────────────────────────────────────────────────────
+        function statusBadge(status) {
+            const map = { pending: ['sbadge-pending', 'Under Review'], accepted: ['sbadge-accepted', 'Accepted'], rejected: ['sbadge-rejected', 'Rejected'], docs: ['sbadge-docs', 'Docs Required'] };
+            const [cls, label] = map[status] || ['sbadge-pending', 'Pending'];
+            return `<span class="sbadge ${cls}">${label}</span>`;
+        }
+
+        // ── LETTER GENERATION ──────────────────────────────────────────────────────────
+        // Helper function to convert image to data URL
+        async function getImageDataURL(imagePath) {
+            try {
+                const response = await fetch(encodeURI(imagePath));
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (err) {
+                console.warn('Could not load logo image:', imagePath, err);
+                return null;
+            }
+        }
+
+        async function downloadAcceptanceLetter(code) {
+            const { jsPDF } = window.jspdf;
+            const app = allApps.find(a => a.id === code);
+            if (!app) { showToast('Application not found.', 'error'); return; }
+
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const name = `${app.studentFirstName || ''} ${app.studentLastName || ''}`.trim();
+            const today = (() => { try { return new Date().toLocaleDateString('en-GB', { day: 'long', month: 'long', year: 'numeric' }); } catch (e) { return '—'; } })();
+            const W = 210, margin = 20;
+
+            // ── LOAD AND ADD LOGO ──
+            let logoDataURL = await getImageDataURL('./larbec piccs/image1.jpeg');
+            if (!logoDataURL) {
+                logoDataURL = await getImageDataURL('./larbec piccs/image1-removebg-preview (1).png');
+            }
+            let yPos = 8;
+            if (logoDataURL) {
+                try {
+                    const logoFormat = logoDataURL.startsWith('data:image/png') ? 'PNG' :
+                        logoDataURL.startsWith('data:image/jpeg') ? 'JPEG' : 'JPEG';
+                    doc.addImage(logoDataURL, logoFormat, margin, 12, 24, 24);
+                    yPos = 40;
+                } catch (e) {
+                    console.warn('Could not add logo to PDF:', e);
+                    yPos = 8;
+                }
+            }
+
+            // ── HEADER ACCENT BAR ──
+            doc.setFillColor(124, 58, 237);
+            doc.rect(0, 0, W, 8, 'F');
+
+            // ── SCHOOL NAME ──
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor(10, 22, 40);
+            doc.text('Larbec International Academy', margin + 35, 22);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(120, 120, 120);
+            doc.text('Atonsu-Fabi, Kumasi, Ghana  |  +233 26 643 4973  |  info@larbec.edu.gh', margin + 35, 28);
+
+            // ── DIVIDER ──
+            doc.setDrawColor(201, 168, 76);
+            doc.setLineWidth(0.8);
+            doc.line(margin, yPos - 5, W - margin, yPos - 5);
+
+            // ── DATE & CODE ──
+            doc.setFontSize(9);
+            doc.setTextColor(120, 120, 120);
+            doc.text(today, margin, yPos + 3);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(201, 168, 76);
+            doc.text('Ref: ' + code, W - margin, yPos + 3, { align: 'right' });
+
+            // ── BODY ──
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            doc.setTextColor(10, 22, 40);
+            let y = yPos + 15;
+            doc.text(`Dear ${app.parentName || 'Parent/Guardian'},`, margin, y);
+            y += 10;
+            doc.setFontSize(10);
+            doc.text('OFFER OF ADMISSION', margin, y);
+            y += 12;
+            doc.setFontSize(10);
+            const lines = doc.splitTextToSize(`We are delighted to inform you that your child, ${name}, has been offered admission to Larbec International Academy for the ${app.academicYear || '2025/2026'} academic year in the ${app.classApplied || 'Primary'} class.\n\nThis offer is subject to:\n• Submission of all required original documents\n• Successful medical examination\n• Confirmation of enrollment by 3rd February 2025\n\n${app.statusNote ? 'Additional Notes: ' + app.statusNote + '\n\n' : ''}We look forward to welcoming your child to the Larbec International family.\n\nPlease contact our admissions office for any clarifications.\n\nWarm regards,`, W - 2 * margin);
+            lines.forEach(line => {
+                doc.text(line, margin, y);
+                y += 6;
+            });
+
+            // ── SIGNATURE ──
+            y += 8;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Mr. Kofi Gyansah', margin, y);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text('Headmaster, Larbec International Academy', margin, y + 5);
+
+            doc.save(`${code}_Acceptance_Letter.pdf`);
+            showToast('Acceptance letter downloaded', 'success');
+        }
+
+        async function downloadRejectionLetter(code) {
+            const { jsPDF } = window.jspdf;
+            const app = allApps.find(a => a.id === code);
+            if (!app) { showToast('Application not found.', 'error'); return; }
+
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const name = `${app.studentFirstName || ''} ${app.studentLastName || ''}`.trim();
+            const today = (() => { try { return new Date().toLocaleDateString('en-GB', { day: 'long', month: 'long', year: 'numeric' }); } catch (e) { return '—'; } })();
+            const W = 210, margin = 20;
+
+            // ── LOAD AND ADD LOGO ──
+            let logoDataURL = await getImageDataURL('./larbec piccs/image1.jpeg');
+            if (!logoDataURL) {
+                logoDataURL = await getImageDataURL('./larbec piccs/image1-removebg-preview (1).png');
+            }
+            let yPos = 8;
+            if (logoDataURL) {
+                try {
+                    const logoFormat = logoDataURL.startsWith('data:image/png') ? 'PNG' :
+                        logoDataURL.startsWith('data:image/jpeg') ? 'JPEG' : 'JPEG';
+                    doc.addImage(logoDataURL, logoFormat, margin, 12, 24, 24);
+                    yPos = 40;
+                } catch (e) {
+                    console.warn('Could not add logo to PDF:', e);
+                    yPos = 8;
+                }
+            }
+
+            // ── HEADER ACCENT BAR ──
+            doc.setFillColor(124, 58, 237);
+            doc.rect(0, 0, W, 8, 'F');
+
+            // ── SCHOOL NAME ──
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor(10, 22, 40);
+            doc.text('Larbec International Academy', margin + 35, 22);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(120, 120, 120);
+            doc.text('Atonsu-Fabi, Kumasi, Ghana  |  +233 26 643 4973  |  info@larbec.edu.gh', margin + 35, 28);
+
+            // ── DIVIDER ──
+            doc.setDrawColor(201, 168, 76);
+            doc.setLineWidth(0.8);
+            doc.line(margin, yPos - 5, W - margin, yPos - 5);
+
+            // ── DATE & CODE ──
+            doc.setFontSize(9);
+            doc.setTextColor(120, 120, 120);
+            doc.text(today, margin, yPos + 3);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(201, 168, 76);
+            doc.text('Ref: ' + code, W - margin, yPos + 3, { align: 'right' });
+
+            // ── BODY ──
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            doc.setTextColor(10, 22, 40);
+            let y = yPos + 15;
+            doc.text(`Dear ${app.parentName || 'Parent/Guardian'},`, margin, y);
+            y += 10;
+            doc.setFontSize(10);
+            doc.setTextColor(180, 0, 0);
+            doc.text('APPLICATION STATUS UPDATE', margin, y);
+            y += 12;
+            doc.setFontSize(10);
+            doc.setTextColor(10, 22, 40);
+            const lines = doc.splitTextToSize(`Thank you for your interest in Larbec International Academy and for submitting an application for your child, ${name}.\n\nAfter careful review by our admissions committee, we regret to inform you that we are unable to offer your child a place at this time.\n\nReason: ${app.statusNote || 'Please contact the school for details.'}\n\nWe appreciate your interest and encourage you to consider re-applying for the next academic year.\n\nPlease do not hesitate to contact our admissions office if you wish to discuss this decision.\n\nBest regards,`, W - 2 * margin);
+            lines.forEach(line => {
+                doc.text(line, margin, y);
+                y += 6;
+            });
+
+            // ── SIGNATURE ──
+            y += 8;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Mr. Kofi Gyansah', margin, y);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text('Headmaster, Larbec International Academy', margin, y + 5);
+
+            doc.save(`${code}_Rejection_Letter.pdf`);
+            showToast('Rejection letter downloaded', 'success');
+        }
+    </script>
+    <script src="scroll-reveal.js"></script>
+</body>
+
+</html>
